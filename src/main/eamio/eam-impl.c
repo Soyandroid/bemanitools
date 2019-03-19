@@ -24,6 +24,8 @@
 
 #define EAM_SENSOR_COOLDOWN 1000
 
+#define MAX_NFC_DEVICES               10
+
 struct eam_unit {
     char *card_path;
     struct hid_stub *hid;
@@ -34,7 +36,7 @@ struct eam_unit {
     uint32_t sensor_time;
     bool sensor_hot;
     nfc_device *nfc_device;
-    nfc_modulation *nfc_modulation;
+    char nfc_last_id[EAM_CARD_NBYTES];
 };
 
 struct eam {
@@ -179,6 +181,36 @@ const char *eam_impl_get_card_path(struct eam *eam, uint8_t unit_no)
     return eam->units[unit_no].card_path;
 }
 
+static nfc_device *eam_impl_open_nfc_dev(struct eam *eam, unsigned int dev_no)
+{
+    log_info("Opening NFC reader %d...", dev_no);
+
+    if (!eam->nfc_context) {
+        log_warning("NFC reader requested, but libnfc init failed.");
+        return NULL;
+    }
+
+    nfc_connstring devs[MAX_NFC_DEVICES];
+    size_t cnt_devs = nfc_list_devices(eam->nfc_context, devs, MAX_NFC_DEVICES);
+
+    log_info("Found %d NFC devices.", (int)cnt_devs);
+
+    if (dev_no >= cnt_devs) {
+        log_warning("No NFC device with index %d found.", dev_no);
+        return NULL;
+    }
+
+    log_info("NFC Reader: %s", devs[dev_no]);
+
+    nfc_device *dev = nfc_open(eam->nfc_context, devs[dev_no]);
+    if (!dev) {
+        log_warning("Failed opening NFC reader %s", devs[dev_no]);
+        return NULL;
+    }
+
+    return dev;
+}
+
 void eam_impl_set_card_path(struct eam *eam, uint8_t unit_no, const char *path)
 {
     log_assert(unit_no < lengthof(eam->units));
@@ -187,10 +219,18 @@ void eam_impl_set_card_path(struct eam *eam, uint8_t unit_no, const char *path)
 
     free(eam->units[unit_no].card_path);
 
+    if (eam->units[unit_no].nfc_device) {
+        nfc_close(eam->units[unit_no].nfc_device);
+        eam->units[unit_no].nfc_device = NULL;
+    }
+
     if (path != NULL) {
         eam->units[unit_no].card_path = str_dup(path);
 
-        if (isalpha(path[0]) && path[1] == ':') {
+        if (path[0] == '/' && path[1] == 'N' && path[2] == 'F' && path[3] == 'C' && path[4] == '/') {
+            eam->units[unit_no].nfc_device = eam_impl_open_nfc_dev(eam, path[5] ? (path[5] - '0') : 0);
+            eam->units[unit_no].drive_no = (uint8_t) -1;
+        } else if (isalpha(path[0]) && path[1] == ':') {
             eam->units[unit_no].drive_no = toupper(path[0]) - 'A';
         } else {
             eam->units[unit_no].drive_no = (uint8_t) -1;
@@ -303,6 +343,26 @@ size_fail:
     hid_mgr_unlock();
 }
 
+static bool eam_impl_get_nfc_sensor_state(struct eam_unit *unit)
+{
+    nfc_modulation modul = { .nmt = NMT_FELICA, .nbr = NBR_212 };
+    nfc_target tgt;
+
+    int res = nfc_initiator_list_passive_targets(unit->nfc_device, modul, &tgt, 1);
+
+    if (res < 0) {
+        log_warning("NFC passive list failed!");
+    }
+    if (res <= 0) {
+        memset(unit->nfc_last_id, 0, EAM_CARD_NBYTES);
+        return false;
+    }
+
+    memcpy(unit->nfc_last_id, &tgt.nti.nfi.abtId, EAM_CARD_NBYTES);
+
+    return true;
+}
+
 bool eam_impl_get_sensor_state(struct eam *eam, uint8_t unit_no)
 {
     struct eam_unit *unit;
@@ -314,6 +374,10 @@ bool eam_impl_get_sensor_state(struct eam *eam, uint8_t unit_no)
 
     unit = &eam->units[unit_no];
     result = false;
+
+    if (unit->nfc_device) {
+        return eam_impl_get_nfc_sensor_state(unit);
+    }
 
     eam_impl_bind_keypad(eam, unit_no);
 
@@ -357,6 +421,23 @@ bool eam_impl_get_sensor_state(struct eam *eam, uint8_t unit_no)
     return result;
 }
 
+static uint8_t eam_impl_read_nfc_card(uint8_t unit_no, struct eam_unit *unit, uint8_t *card_id)
+{
+    memcpy(card_id, unit->nfc_last_id, EAM_CARD_NBYTES);
+
+    if (!card_id[0] && !card_id[1] && !card_id[2] && !card_id[3] &&
+        !card_id[4] && !card_id[5] && !card_id[6] && !card_id[7])
+    {
+        return EAM_IO_CARD_NONE;
+    }
+
+    log_misc("Unit %d: Loaded card ID [%02x%02x%02x%02x%02x%02x%02x%02x] from %s",
+             unit_no, card_id[0], card_id[1], card_id[2], card_id[3],
+             card_id[4], card_id[5], card_id[6], card_id[7], unit->card_path);
+
+    return EAM_IO_CARD_FELICA;
+}
+
 uint8_t eam_impl_read_card(
     struct eam *eam, uint8_t unit_no, uint8_t *card_id, uint8_t nbytes)
 {
@@ -370,6 +451,10 @@ uint8_t eam_impl_read_card(
     log_assert(nbytes == EAM_CARD_NBYTES);
 
     unit = &eam->units[unit_no];
+
+    if (unit->nfc_device) {
+        return eam_impl_read_nfc_card(unit_no, unit, card_id);
+    }
 
     if (unit->card_path == NULL) {
         goto path_fail;
@@ -511,6 +596,9 @@ void eam_impl_destroy(struct eam *eam)
 
     for (unit_no = lengthof(eam->units) - 1; unit_no >= 0; unit_no--) {
         free(eam->units[unit_no].card_path);
+        if (eam->units[unit_no].nfc_device) {
+            nfc_close(eam->units[unit_no].nfc_device);
+        }
     }
 
     DeleteCriticalSection(&eam->lock);

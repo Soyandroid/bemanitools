@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <nfc/nfc.h>
+
 #include "bemanitools/eamio.h"
 
 #include "eamio/eam-impl.h"
@@ -31,6 +33,8 @@ struct eam_unit {
     uint8_t drive_no;
     uint32_t sensor_time;
     bool sensor_hot;
+    nfc_device *nfc_device;
+    nfc_modulation *nfc_modulation;
 };
 
 struct eam {
@@ -43,6 +47,7 @@ struct eam {
     bool autogen;
     bool alt_10k;
     bool mux;
+    nfc_context *nfc_context;
 };
 
 static const uint32_t eam_keypad_usages[EAM_IO_KEYPAD_COUNT + 1] = {
@@ -105,11 +110,15 @@ struct eam *eam_impl_create(void)
         unit->bound_ctls = false;
         unit->drive_no = (uint8_t) -1;
         unit->sensor_time = 0;
+
+        unit->nfc_device = NULL;
     }
 
     eam->autogen = false;
     eam->alt_10k = false;
     eam->mux = false;
+
+    nfc_init(&eam->nfc_context);
 
     return eam;
 }
@@ -505,6 +514,8 @@ void eam_impl_destroy(struct eam *eam)
     }
 
     DeleteCriticalSection(&eam->lock);
+
+    nfc_exit(eam->nfc_context);
 
     free(eam);
 }

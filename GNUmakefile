@@ -172,6 +172,7 @@ define t_compile
 
 depdir_$1_$2_$3	:= $(depdir)/$$(subdir_$1_$2)/$3
 abslib_$1_$2_$3	:= $$(libs_$3:%=$$(bindir_$1_indep)/lib%.a)
+abslib_$1_$2_$3	+= $(abslibs_$3_$1)
 absdpl_$1_$2_$3	:= $$(deplibs_$3:%=$$(bindir_$1_$2)/lib%.a)
 objdir_$1_$2_$3	:= $(objdir)/$$(subdir_$1_$2)/$3
 obj_$1_$2_$3	:=	$$(src_$3:%.c=$$(objdir_$1_$2_$3)/%.o) \

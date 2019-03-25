@@ -343,7 +343,7 @@ size_fail:
     hid_mgr_unlock();
 }
 
-static bool eam_impl_get_nfc_sensor_state(struct eam_unit *unit)
+static bool eam_impl_get_felica_sensor_state(struct eam_unit *unit)
 {
     nfc_modulation modul = { .nmt = NMT_FELICA, .nbr = NBR_212 };
     nfc_target tgt;
@@ -351,16 +351,58 @@ static bool eam_impl_get_nfc_sensor_state(struct eam_unit *unit)
     int res = nfc_initiator_list_passive_targets(unit->nfc_device, modul, &tgt, 1);
 
     if (res < 0) {
-        log_warning("NFC passive list failed!");
+        log_warning("NFC passive list FeliCa failed!");
     }
     if (res <= 0) {
-        memset(unit->nfc_last_id, 0, EAM_CARD_NBYTES);
         return false;
     }
 
     memcpy(unit->nfc_last_id, &tgt.nti.nfi.abtId, EAM_CARD_NBYTES);
 
     return true;
+}
+
+static bool eam_impl_get_iso14443a_sensor_state(struct eam_unit *unit)
+{
+    nfc_modulation modul = { .nmt = NMT_ISO14443A, .nbr = NBR_106 };
+    nfc_target tgt;
+
+    int res = nfc_initiator_list_passive_targets(unit->nfc_device, modul, &tgt, 1);
+
+    if (res < 0) {
+        log_warning("NFC passive list Mifare failed!");
+    }
+    if (res <= 0) {
+        return false;
+    }
+
+    if (tgt.nti.nai.szUidLen < 4) {
+        log_warning("Mifare uid too short!");
+        return false;
+    }
+
+    unit->nfc_last_id[0] = 0xE0;
+    unit->nfc_last_id[1] = 0x04;
+    unit->nfc_last_id[2] = 0x01;
+    unit->nfc_last_id[3] = 0x00;
+    memcpy(&unit->nfc_last_id[4], &tgt.nti.nai.abtUid, 4);
+
+    return true;
+}
+
+static bool eam_impl_get_nfc_sensor_state(struct eam_unit *unit)
+{
+    if (eam_impl_get_felica_sensor_state(unit)) {
+        return true;
+    }
+
+    if (eam_impl_get_iso14443a_sensor_state(unit)) {
+        return true;
+    }
+
+    memset(unit->nfc_last_id, 0, EAM_CARD_NBYTES);
+
+    return false;
 }
 
 bool eam_impl_get_sensor_state(struct eam *eam, uint8_t unit_no)

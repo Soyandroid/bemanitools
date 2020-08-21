@@ -14,7 +14,6 @@
 
 #include "pnmhook1/d3d9.h"
 
-#include "util/console.h"
 #include "util/defs.h"
 #include "util/log.h"
 #include "util/signal.h"
@@ -28,6 +27,7 @@
 // - Add RtEffects stub dll
 // - Add swapping of ezusb and RtEffects files to startup bat script
 // - Make iidxhook-utils re-usable for popn
+// - switch to process_hijack_startup once the missing bit inside it is implemented for XP support
 
 typedef int (*ShowCursor_t)(BOOL bShow);
 static ShowCursor_t real_ShowCursor;
@@ -79,7 +79,7 @@ HANDLE my_FindFirstFileA(
     return hnd;
 }
 
-HRESULT irp_invoke_next_debug(struct irp *irp)
+HRESULT iohook_invoke_next_debug(struct irp *irp)
 {
     // TODO this solution is not great, re-write and cleanup
     if (irp->op == IRP_OP_OPEN) {
@@ -108,7 +108,7 @@ HRESULT irp_invoke_next_debug(struct irp *irp)
 
             irp->open_filename = new_path;
 
-            HRESULT hr = irp_invoke_next(irp);
+            HRESULT hr = iohook_invoke_next(irp);
 
             free(new_path);
             free(buf);
@@ -121,13 +121,8 @@ HRESULT irp_invoke_next_debug(struct irp *irp)
         free(buf);
     }
 
-    return irp_invoke_next(irp);
+    return iohook_invoke_next(irp);
 }
-
-static const irp_handler_t iidxhook_handlers[] = {
-    settings_hook_dispatch_irp,
-    irp_invoke_next_debug,
-};
 
 static const hook_d3d9_irp_handler_t iidxhook_d3d9_handlers[] = {
     iidxhook_util_d3d9_irp_handler,
@@ -199,7 +194,8 @@ static int my_ShowCursor(BOOL bShow)
 
         iidxhook3_setup_d3d9_hooks();
 
-        iohook_init(iidxhook_handlers, lengthof(iidxhook_handlers));
+        iohook_push_handler(settings_hook_dispatch_irp);
+        iohook_push_handler(iohook_invoke_next_debug);
 
         eamuse_hook_init();
 
@@ -233,10 +229,6 @@ static const struct hook_symbol init_hook_syms2[] = {
 BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 {
     if (reason == DLL_PROCESS_ATTACH) {
-        //console_create("pnmhook1", true);
-
-        FILE* file = fopen("asdf", "w+");
-
         log_to_writer(log_writer_debug, NULL);
 
         signal_exception_handler_init();
@@ -247,9 +239,6 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
             NULL, "Kernel32.dll", init_hook_syms2, lengthof(init_hook_syms2));
 
         settings_hook_init();
-
-        /* Logging to file and other destinations is handled by inject */
-        log_to_writer(log_writer_debug, NULL);
     }
 
     return TRUE;

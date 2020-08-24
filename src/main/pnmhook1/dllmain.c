@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <io.h>
+#include <fcntl.h>
+
 #include "hook/iohook.h"
 #include "hook/table.h"
 
@@ -40,6 +43,64 @@ typedef HANDLE (*FindFirstFileA_t)(
 );
 
 static FindFirstFileA_t real_FindFirstFileA;
+
+void log_create_console(const char* title, bool reopen_stdio)
+{
+    static bool has_console;
+    size_t console_buffer_width  = 80;
+    size_t console_buffer_height = 5000;
+    size_t console_window_width  = 80;
+    size_t console_window_height = 30;
+    SMALL_RECT window_size       = {
+        0,
+        0,
+        console_window_width,
+        console_window_height,
+    };
+    COORD console_buffer_dimensions = {
+        console_buffer_width,
+        console_buffer_height,
+    };
+    int crt_fd            = 0;
+    FILE* hf_in           = NULL;
+    FILE* hf_out          = NULL;
+    HANDLE console_handle = NULL;
+
+    if (has_console) {
+        if (title != NULL) {
+            SetConsoleTitle(title);
+        }
+
+        return;
+    }
+
+    AllocConsole();
+
+    crt_fd = _open_osfhandle((intptr_t) GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
+    hf_out = _fdopen(crt_fd, "w");
+    setvbuf(hf_out, NULL, _IONBF, 1);
+
+    crt_fd = _open_osfhandle((intptr_t) GetStdHandle(STD_INPUT_HANDLE), _O_TEXT);
+    hf_in  = _fdopen(crt_fd, "r");
+    setvbuf(hf_in, NULL, _IONBF, 128);
+
+    if (title != NULL) {
+        SetConsoleTitle(title);
+    }
+
+    if (reopen_stdio) {
+        freopen("CONIN$", "r", stdin);
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+    }
+
+    /* Reset the screen and window sizes */
+    console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleScreenBufferSize(console_handle, console_buffer_dimensions);
+    SetConsoleWindowInfo(console_handle, 1, &window_size);
+
+    has_console = true;    
+}
 
 HANDLE my_FindFirstFileA(
   LPCSTR             lpFileName,
@@ -99,8 +160,8 @@ HRESULT iohook_invoke_next_debug(struct irp *irp)
             char buffer[1024];
 
             memset(buffer, 0, 1024);
-            strcpy(buffer, "..\\..");
-            strcpy(buffer + 5, buf + 9);
+            strcpy(buffer, "Z:\\SharedFolder\\popn\\15\\popn15\\d\\popn15");
+            strcpy(buffer + strlen("Z:\\SharedFolder\\popn\\15\\popn15\\d\\popn15"), buf + 9);
 
             log_info("redirect data: %s", buffer);
 
@@ -190,21 +251,23 @@ static int my_ShowCursor(BOOL bShow)
 
         hook_initialized = true;
 
-        log_info("!!!!!!!!!!!!!!");
+        // TODO use dxwnd for now to get everything else working first, take care of d3d9 hooking stuff later
+        // TODO something of the iidx hooks breaks popn and causes access violation or something
+        // Strip the copy-pasted module to the bare minimum of what we currently need, i.e. window
+        // mode and make that work first. derive a commonly sharable d3d9 module from that later
+        // iidxhook3_setup_d3d9_hooks();
 
-        iidxhook3_setup_d3d9_hooks();
+        // iohook_push_handler(settings_hook_dispatch_irp);
+        // iohook_push_handler(iohook_invoke_next_debug);
 
-        iohook_push_handler(settings_hook_dispatch_irp);
-        iohook_push_handler(iohook_invoke_next_debug);
+        //eamuse_hook_init();
 
-        eamuse_hook_init();
+        // struct net_addr address;
+        // address.type = NET_ADDR_TYPE_IPV4;
+        // address.ipv4.addr = 0x0100007F;
+        // address.ipv4.port = 5730;
 
-        struct net_addr address;
-        address.type = NET_ADDR_TYPE_IPV4;
-        address.ipv4.addr = 0x0100007F;
-        address.ipv4.port = 5730;
-
-        eamuse_set_addr(&address);
+        // eamuse_set_addr(&address);
 
         log_info("-------------------------------------------------------------");
         log_info("----------------- End pnmhook my_ShowCursor -----------------");
@@ -231,14 +294,18 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
     if (reason == DLL_PROCESS_ATTACH) {
         log_to_writer(log_writer_debug, NULL);
 
+        log_warning("!!!!!!!!!!!!!!!!!");
+
+        log_create_console("test pnmhook", true);
+
         signal_exception_handler_init();
 
         hook_table_apply(
             NULL, "USER32.dll", init_hook_syms, lengthof(init_hook_syms));
-                hook_table_apply(
-            NULL, "Kernel32.dll", init_hook_syms2, lengthof(init_hook_syms2));
+            //     hook_table_apply(
+            // NULL, "Kernel32.dll", init_hook_syms2, lengthof(init_hook_syms2));
 
-        settings_hook_init();
+        // settings_hook_init();
     }
 
     return TRUE;

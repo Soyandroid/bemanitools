@@ -1,6 +1,7 @@
 LIBRARY ezusb-proxy
 
 EXPORTS
+    DllMain@12 @1 NONAME
     ?usbCheckAlive@@YAHXZ=usbCheckAlive
     ?usbCheckSecurityNew@@YAHH@Z=usbCheckSecurityNew
     ?usbCoinGet@@YAHH@Z=usbCoinGet

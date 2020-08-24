@@ -5,6 +5,7 @@ ldflags_ezusb-proxy   := \
     -liphlpapi \
 
 libs_ezusb-proxy      := \
+    util \
 
 src_ezusb-proxy       := \
     dllmain.c \

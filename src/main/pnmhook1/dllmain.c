@@ -7,8 +7,18 @@
 #include <io.h>
 #include <fcntl.h>
 
+#include "ezusb2-emu/desc.h"
+#include "ezusb2-emu/device.h"
+
+// TODO use iidx modules for initial testing
+#include "ezusb2-iidx-emu/msg.h"
+
 #include "hook/iohook.h"
 #include "hook/table.h"
+
+#include "hooklib/acp.h"
+#include "hooklib/adapter.h"
+#include "hooklib/setupapi.h"
 
 #include "imports/avs.h"
 
@@ -305,7 +315,15 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
             //     hook_table_apply(
             // NULL, "Kernel32.dll", init_hook_syms2, lengthof(init_hook_syms2));
 
+        acp_hook_init();
+        adapter_hook_init();
         // settings_hook_init();
+
+        // TODO not sure if this really needs to be here. rather have it in ShowCursor
+        iohook_push_handler(ezusb2_emu_device_dispatch_irp);
+
+        hook_setupapi_init(&ezusb2_emu_desc_device.setupapi);
+        ezusb2_emu_device_hook_init(ezusb2_iidx_emu_msg_init());
     }
 
     return TRUE;

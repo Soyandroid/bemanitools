@@ -6,7 +6,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "ezusb2-emu/desc.h"
+
 #include "ezusb-proxy/ezusb.h"
+
+#include "hook/iohook.h"
+#include "hook/table.h"
+
+#include "hooklib/setupapi.h"
 
 #include "util/log.h"
 
@@ -38,6 +45,19 @@ static DllMain_t real_DllMain;
 static bool real_ezusb_initialized;
 
 static void init_real_ezusb();
+
+typedef HDEVINFO __stdcall (*SetupDiGetClassDevsA_t)(const GUID *ClassGuid, PCSTR Enumerator, HWND hwndParent, DWORD Flags);
+
+static SetupDiGetClassDevsA_t real_SetupDiGetClassDevsA;
+
+HDEVINFO __stdcall my_SetupDiGetClassDevsA(const GUID *ClassGuid, PCSTR Enumerator, HWND hwndParent, DWORD Flags)
+{
+    log_warning("??????????????");
+
+    return real_SetupDiGetClassDevsA(ClassGuid, Enumerator, hwndParent, Flags);
+}
+
+
 
 int usbCheckAlive() {
     log_misc("usbCheckAlive");
@@ -191,12 +211,6 @@ static void load_real_ezusb_functions()
 {
     HMODULE module;
 
-    char buffer[512];
-
-    GetCurrentDirectoryA(512, buffer);
-
-    log_info("%s", buffer);
-
     // This triggers a call to DllMain
     module = LoadLibraryA("ezusb-orig.dll");
 
@@ -226,6 +240,7 @@ static void load_real_ezusb_functions()
     real_usbWdtReset = (usbWdtReset_t) get_proc_address(module, "usbWdtReset");
     real_usbWdtStart = (usbWdtStart_t) get_proc_address(module, "usbWdtStart");
     real_usbWdtStartDone = (usbWdtStartDone_t) get_proc_address(module, "usbWdtStartDone");
+
     real_DllMain = (DllMain_t) get_proc_address(module, "DllMain");
 }
 
@@ -240,6 +255,12 @@ static void init_real_ezusb()
     }
 }
 
+static const struct hook_symbol init_hook_syms[] = {
+    {.name = "SetupDiGetClassDevsA",
+     .patch = my_SetupDiGetClassDevsA,
+     .link = (void **) &real_SetupDiGetClassDevsA},
+};
+
 BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 {
     if (reason != DLL_PROCESS_ATTACH) {
@@ -249,6 +270,11 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
     log_to_writer(log_writer_debug, NULL);
 
     log_misc("DllMain");
+
+    hook_table_apply(
+            NULL, "setupapi.dll", init_hook_syms, lengthof(init_hook_syms));
+
+    log_warning("proxy SetupDiGetClassDevsA: real %p hook %p", real_SetupDiGetClassDevsA, my_SetupDiGetClassDevsA);
 
     return TRUE;
 }

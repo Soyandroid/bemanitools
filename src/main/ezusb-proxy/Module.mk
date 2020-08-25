@@ -5,6 +5,11 @@ ldflags_ezusb-proxy   := \
     -liphlpapi \
 
 libs_ezusb-proxy      := \
+    iidxhook-util \
+    ezusb-emu \
+    ezusb2-emu \
+    hooklib \
+    hook \
     util \
 
 src_ezusb-proxy       := \

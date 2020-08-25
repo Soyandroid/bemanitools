@@ -376,4 +376,6 @@ void hook_setupapi_init(const struct hook_setupapi_data *data)
     hook_setupapi_data = data;
     log_info(
         "Hooked setupapi for %s, %s", data->device_path, data->device_desc);
+
+    log_warning("SetupDiGetClassDevsA: real %p hook %p", real_SetupDiGetClassDevsA, my_SetupDiGetClassDevsA);
 }

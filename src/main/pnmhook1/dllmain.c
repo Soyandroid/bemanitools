@@ -310,6 +310,7 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
         signal_exception_handler_init();
 
+        // TODO instead of first param NULL, try mod of current module?
         hook_table_apply(
             NULL, "USER32.dll", init_hook_syms, lengthof(init_hook_syms));
             //     hook_table_apply(

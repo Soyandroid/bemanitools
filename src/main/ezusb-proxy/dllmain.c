@@ -211,8 +211,14 @@ static void load_real_ezusb_functions()
 {
     HMODULE module;
 
+    module = LoadLibraryEx("ezusb-orig.dll", NULL, DONT_RESOLVE_DLL_REFERENCES);
+
+    log_warning("**** %p", module);
+
     // This triggers a call to DllMain
     module = LoadLibraryA("ezusb-orig.dll");
+
+    log_warning("**** %p", module);
 
     if (!module) {
         log_fatal("Could not load ezusb-orig.dll (%08lX).", GetLastError());
@@ -271,10 +277,12 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     log_misc("DllMain");
 
-    hook_table_apply(
-            NULL, "setupapi.dll", init_hook_syms, lengthof(init_hook_syms));
+    SetupDiGetClassDevsA(NULL, "asdf", NULL, 1);
 
-    log_warning("proxy SetupDiGetClassDevsA: real %p hook %p", real_SetupDiGetClassDevsA, my_SetupDiGetClassDevsA);
+    // hook_table_apply(
+    //         NULL, "setupapi.dll", init_hook_syms, lengthof(init_hook_syms));
+
+    // log_warning("proxy SetupDiGetClassDevsA: real %p hook %p", real_SetupDiGetClassDevsA, my_SetupDiGetClassDevsA);
 
     return TRUE;
 }

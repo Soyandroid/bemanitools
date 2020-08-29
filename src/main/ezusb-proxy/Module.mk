@@ -4,6 +4,7 @@ ldflags_ezusb-proxy   := \
     -lws2_32 \
     -liphlpapi \
     -lsetupapi \
+    -ldbghelp \
 
 libs_ezusb-proxy      := \
     iidxhook-util \

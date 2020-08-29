@@ -27,4 +27,4 @@ typedef int (*usbWdtReset_t)();
 typedef int (*usbWdtStart_t)(int a1);
 typedef int (*usbWdtStartDone_t)();
 
-typedef BOOL WINAPI (*DllMain_t)(HMODULE mod, DWORD reason, void *ctx);
+typedef BOOL __stdcall (*DllEntryPoint_t)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved);

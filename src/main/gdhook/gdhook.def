@@ -1,0 +1,4 @@
+LIBRARY gdhook
+
+EXPORTS
+    DllMain@12 @1 NONAME

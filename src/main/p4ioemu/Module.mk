@@ -5,5 +5,5 @@ libs_p4ioemu      := \
 
 src_p4ioemu     := \
     device.c \
-    setupapi.c
-
+    setupapi.c \
+	uart.c

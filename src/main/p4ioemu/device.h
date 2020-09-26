@@ -18,6 +18,8 @@ struct p4ioemu_device_msg_hook {
         uint32_t resp_max_len);
     void (*roundplug_read_id)(uint8_t type, void *buffer, uint32_t len);
     void (*roundplug_read_mem)(uint8_t type, void *buffer, uint32_t len);
+    void (*get_coinstock)(void *buffer, uint32_t len);
+    void (*set_portout)(const void *portout, uint32_t portout_len);
 };
 
 void p4ioemu_init(const struct p4ioemu_device_msg_hook *msg_hook);

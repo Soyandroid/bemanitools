@@ -30,7 +30,10 @@ static const struct p4ioemu_device_msg_hook jbhook_io_msg = {
     .jamma2_read = jbhook_io_jamma2_read,
     .command_handle = jbhook_command_handle,
     .roundplug_read_id = NULL,
-    .roundplug_read_mem = NULL};
+    .roundplug_read_mem = NULL,
+    .get_coinstock = NULL,
+    .set_portout = NULL}
+;
 
 /*
     0:0 ???

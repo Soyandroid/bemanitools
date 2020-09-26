@@ -219,6 +219,7 @@ int property_node_refer(
     uint32_t nbytes);
 void property_node_remove(struct property_node *node);
 enum property_type property_node_type(struct property_node *node);
+struct property *property_node_get_desc(struct property_node *node);
 struct property_node *property_node_traversal(
     struct property_node *node, enum property_node_traversal direction);
 void property_node_datasize(struct property_node *node);

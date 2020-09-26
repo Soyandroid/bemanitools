@@ -11,6 +11,9 @@
 #include "util/log.h"
 #include "util/str.h"
 
+#include "p4io/cmd.h"
+#include "p4ioemu/uart.h"
+
 //#define P4IOEMU_DEBUG_DUMP
 
 /* can't seem to #include the requisite DDK headers from usermode code,
@@ -41,44 +44,6 @@
         METHOD_BUFFERED,            \
         FILE_ANY_ACCESS)
 
-enum p4ioemu_p4io_command {
-    P4IOEMU_P4IO_CMD_INIT = 0x00,
-    P4IOEMU_P4IO_CMD_GET_DEVICE_INFO = 0x01,
-    P4IOEMU_P4IO_CMD_UNKNOWN = 0x12,
-    P4IOEMU_P4IO_CMD_RESET_WTD = 0x1C,
-    P4IOEMU_P4IO_CMD_SCI_MNG_OPEN = 0x20,
-    P4IOEMU_P4IO_CMD_SCI_UPDATE = 0x21,
-    /* SCI = serial communication interface */
-    P4IOEMU_P4IO_CMD_SCI_MNG_BREAK = 0x24,
-    /* Read round plug id over one-wire */
-    P4IOEMU_P4IO_CMD_DALLAS_READ_ID = 0x40,
-    /* Read round plug mem over one-wire */
-    P4IOEMU_P4IO_CMD_DALLAS_READ_MEM = 0x41
-};
-
-struct p4ioemu_p4io_cmd_package {
-    uint8_t header_AA;
-    uint8_t cmd;
-    uint8_t seq_num;
-    uint8_t payload_len;
-};
-
-struct p4ioemu_p4io_device_info_resp {
-    uint32_t type;
-    uint8_t padding;
-    uint8_t version_major;
-    uint8_t version_minor;
-    uint8_t version_revision;
-    char product_code[4];
-    char build_date[16];
-    char build_time[16];
-};
-
-struct p4ioemu_p4io_read_roundplug_req {
-    /* 0 = black, 1 = white */
-    uint8_t type;
-};
-
 static const struct p4ioemu_device_msg_hook *p4ioemu_device_msg_hook;
 
 static HANDLE p4ioemu_p4io_fd;
@@ -95,8 +60,8 @@ static uint32_t p4ioemu_p4io_command_handle(
     uint32_t resp_max_len)
 {
     switch (cmd) {
-        case P4IOEMU_P4IO_CMD_INIT: {
-            log_misc("P4IOEMU_P4IO_CMD_INIT");
+        case P4IO_CMD_INIT: {
+            log_misc("P4IO_CMD_INIT");
 
             /* no data to send to host */
             memset(resp, 0, resp_max_len);
@@ -104,28 +69,43 @@ static uint32_t p4ioemu_p4io_command_handle(
             return 0;
         }
 
-        case P4IOEMU_P4IO_CMD_GET_DEVICE_INFO: {
-            log_misc("P4IOEMU_P4IO_CMD_GET_DEVICE_INFO");
+		case P4IO_CMD_REQ_COINSTOCK: {
+            // log_misc("P4IO_CMD_REQ_COINSTOCK");
 
-            struct p4ioemu_p4io_device_info_resp *info =
-                (struct p4ioemu_p4io_device_info_resp *) resp;
+            if (p4ioemu_device_msg_hook->get_coinstock) {
+                p4ioemu_device_msg_hook->get_coinstock(resp, 4);
+            } else {
+                memset(resp, 0, 4);
+            }
+
+			return 4;
+		}
+
+        case P4IO_CMD_GET_DEVICE_INFO: {
+            log_misc("P4IO_CMD_GET_DEVICE_INFO");
+
+            struct p4io_device_info_resp *info =
+                (struct p4io_device_info_resp *) resp;
+
+			memset(resp, 0, sizeof(struct p4io_device_info_resp));
 
             info->type = 0x37133713;
-            info->version_major = 5;
-            info->version_minor = 7;
-            info->version_revision = 3;
-            memcpy(info->product_code, "P4IO", 4);
-            memcpy(info->build_date, "build_date", 11);
-            memcpy(info->build_time, "build_time", 11);
+            info->flag = 1;
+            info->version_major = 1;
+            info->version_minor = 1;
+            info->version_revision = 0;
+            memcpy(info->product_code, "BMPU", 4);
+            memcpy(info->build_date, __DATE__, strlen(__DATE__));
+            memcpy(info->build_time, __TIME__, strlen(__TIME__));
 
-            return sizeof(struct p4ioemu_p4io_device_info_resp);
+            return sizeof(struct p4io_device_info_resp);
         }
 
-        case P4IOEMU_P4IO_CMD_DALLAS_READ_ID: {
-            const struct p4ioemu_p4io_read_roundplug_req *req =
-                (const struct p4ioemu_p4io_read_roundplug_req *) payload;
+        case P4IO_CMD_DALLAS_READ_ID: {
+            const struct p4io_read_roundplug_req *req =
+                (const struct p4io_read_roundplug_req *) payload;
 
-            log_misc("P4IOEMU_P4IO_CMD_DALLAS_READ_ID: %d", req->type);
+            log_misc("P4IO_CMD_DALLAS_READ_ID: %d", req->type);
 
             if (p4ioemu_device_msg_hook->roundplug_read_id) {
                 p4ioemu_device_msg_hook->roundplug_read_id(req->type, resp, 8);
@@ -136,39 +116,72 @@ static uint32_t p4ioemu_p4io_command_handle(
             return 8;
         }
 
-        case P4IOEMU_P4IO_CMD_DALLAS_READ_MEM: {
-            const struct p4ioemu_p4io_read_roundplug_req *req =
-                (const struct p4ioemu_p4io_read_roundplug_req *) payload;
+        case P4IO_CMD_DALLAS_READ_MEM: {
+            const struct p4io_read_roundplug_req *req =
+                (const struct p4io_read_roundplug_req *) payload;
 
-            log_misc("P4IOEMU_P4IO_CMD_DALLAS_READ_MEM: %d", req->type);
+            log_misc("P4IO_CMD_DALLAS_READ_MEM: %d", req->type);
 
             if (p4ioemu_device_msg_hook->roundplug_read_mem) {
                 p4ioemu_device_msg_hook->roundplug_read_mem(
-                    req->type, resp, 32);
+                    req->type, resp, 33);
             } else {
-                memset(resp, 0, 32);
+                memset(resp, 0, 33);
             }
 
-            return 32;
+            return 33;
         }
 
-        case P4IOEMU_P4IO_CMD_UNKNOWN: {
-            log_misc("P4IOEMU_P4IO_CMD_UNKNOWN: %d", payload_len);
+        case P4IO_CMD_SET_PORTOUT: {
+            log_misc("P4IO_CMD_SET_PORTOUT: %d", payload_len);
+
+            if (p4ioemu_device_msg_hook->set_portout) {
+                p4ioemu_device_msg_hook->set_portout(payload, payload_len);
+            }
 
             return 0;
         }
 
-        case P4IOEMU_P4IO_CMD_SCI_UPDATE: {
-            // log_misc("P4IOEMU_P4IO_CMD_SCI_UPDATE");
+        case P4IO_CMD_SCI_MNG_OPEN: {
+            // log_misc("P4IO_CMD_SCI_MNG_OPEN");
 
-            // TODO we need a game which uses it
-            memset(resp, 0, 61);
+            const struct p4io_sci_open_req *req =
+                (const struct p4io_sci_open_req *) payload;
+
+            if (payload_len == 3) {
+                p4io_uart_cmd_open(req);
+			}
 
             return 0;
         }
 
-        case P4IOEMU_P4IO_CMD_RESET_WTD: {
-            // log_misc("P4IOEMU_P4IO_CMD_RESET_WTD");
+        case P4IO_CMD_SCI_MNG_BREAK: {
+            // log_misc("P4IO_CMD_SCI_MNG_BREAK");
+
+            const struct p4io_sci_break_req *req =
+                (const struct p4io_sci_break_req *) payload;
+
+            if (payload_len == 2) {
+                p4io_uart_cmd_break(req);
+            }
+
+            return 0;
+        }
+
+        case P4IO_CMD_SCI_UPDATE: {
+            // log_misc("P4IO_CMD_SCI_UPDATE");
+
+            const struct p4io_sci_update_req *req =
+                (const struct p4io_sci_update_req *) payload;
+
+			struct p4io_sci_update_resp *resp_payload =
+                (struct p4io_sci_update_resp *) resp;
+
+            return p4io_uart_cmd_update(req, payload_len - 1, resp_payload);
+        }
+
+        case P4IO_CMD_SET_WATCHDOG: {
+            // log_misc("P4IO_CMD_SET_WATCHDOG");
 
             return 0;
         }
@@ -188,20 +201,20 @@ static void p4ioemu_p4io_dump_buffer(const void *buffer, uint32_t len)
 
 static HRESULT p4ioemu_p4io_bulk_read(void *resp, uint32_t nbytes)
 {
-    struct p4ioemu_p4io_cmd_package *package;
+    struct p4io_cmd_package *package;
     void *payload;
     uint32_t max_payload_len;
     uint32_t payload_len;
 
-    if (nbytes < sizeof(struct p4ioemu_p4io_cmd_package)) {
+    if (nbytes < sizeof(struct p4io_cmd_package)) {
         log_warning("Buffer for bulk read endpoint to short: %d", nbytes);
 
         return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
     }
 
-    package = (struct p4ioemu_p4io_cmd_package *) resp;
-    payload = resp + sizeof(struct p4ioemu_p4io_cmd_package);
-    max_payload_len = nbytes - sizeof(struct p4ioemu_p4io_cmd_package);
+    package = (struct p4io_cmd_package *) resp;
+    payload = resp + sizeof(struct p4io_cmd_package);
+    max_payload_len = nbytes - sizeof(struct p4io_cmd_package);
 
     if (max_payload_len < p4ioemu_p4io_cmd_buffer_resp_len) {
         log_warning(
@@ -225,18 +238,18 @@ static HRESULT p4ioemu_p4io_bulk_read(void *resp, uint32_t nbytes)
 
 static HRESULT p4ioemu_p4io_bulk_write(const void *req, uint32_t nbytes)
 {
-    const struct p4ioemu_p4io_cmd_package *package;
+    const struct p4io_cmd_package *package;
     const void *payload;
 
-    if (nbytes < sizeof(struct p4ioemu_p4io_cmd_package)) {
+    if (nbytes < sizeof(struct p4io_cmd_package)) {
         log_warning("Command on bulk write endpoint to short: %d", nbytes);
         p4ioemu_p4io_dump_buffer(req, nbytes);
 
         return E_INVALIDARG;
     }
 
-    package = (struct p4ioemu_p4io_cmd_package *) req;
-    payload = req + sizeof(struct p4ioemu_p4io_cmd_package);
+    package = (struct p4io_cmd_package *) req;
+    payload = req + sizeof(struct p4io_cmd_package);
 
     if (package->header_AA != 0xAA) {
         log_warning("Command on bulk endpoint to short: %d", nbytes);

@@ -44,6 +44,7 @@
 #                   pop'n music 21 Sunny Park
 #                   SOUND VOLTEX (1-4)
 #					jubeat prop
+#       Patch 9:    GITADORA
 #
 # 16:   Patch 1:    beatmania IIDX 21 SPADA
 #                   beatmania IIDX 22 PENDUAL
@@ -70,7 +71,7 @@ cflags          += \
 # that is still ABI-compatible with the real build its target links against.
 
 avsvers_32      := 1700 1603 1601 1508 1403 1304 1101 803 0
-avsvers_64      := 1700 1603 1601 1508
+avsvers_64      := 1700 1603 1601 1508 1509
 
 imps            += avs avs-ea3
 
@@ -108,6 +109,8 @@ include src/main/ezusb2-iidx/Module.mk
 include src/main/ezusb2-iidx-emu/Module.mk
 include src/main/ezusb2-tool/Module.mk
 include src/main/ezusb-iidx-emu/Module.mk
+include src/main/gdhook/Module.mk
+include src/main/gdio/Module.mk
 include src/main/geninput/Module.mk
 include src/main/hook/Module.mk
 include src/main/hooklib/Module.mk
@@ -508,6 +511,21 @@ $(zipdir)/bst.zip: \
 	$(V)echo ... $@
 	$(V)zip -j $@ $^
 
+$(zipdir)/gd.zip: \
+		build/bin/avs2_1509-64/gdhook.dll \
+		build/bin/avs2_1509-64/launcher.exe \
+		build/bin/indep-64/config.exe \
+		build/bin/indep-64/eamio.dll \
+		build/bin/indep-64/geninput.dll \
+		build/bin/indep-64/gdio.dll \
+		dist/gd/config.bat \
+		dist/gd/gamestart-gf.bat \
+		dist/gd/gamestart-dm.bat \
+		dist/gd/gdhook.conf \
+		| $(zipdir)/
+	$(V)echo ... $@
+	$(V)zip -j $@ $^
+
 $(zipdir)/doc.zip: \
 		doc/iidxhook \
 		doc/sdvxhook \
@@ -548,6 +566,7 @@ $(BUILDDIR)/bemanitools.zip: \
 		$(zipdir)/ddr-12-to-16.zip \
 		$(zipdir)/ddr-16-x64.zip \
 		$(zipdir)/doc.zip \
+		$(zipdir)/gd.zip \
 		$(zipdir)/iidx-09-to-12.zip \
 		$(zipdir)/iidx-13.zip \
 		$(zipdir)/iidx-14-to-17.zip \

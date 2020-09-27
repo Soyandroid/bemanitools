@@ -14,6 +14,7 @@ enum {
 struct gdhook_config {
     int32_t cab_type;
     bool is_windowed;
+    char cmdline_app[1024];
 };
 
 void gdhook_config_init(struct cconfig *config);

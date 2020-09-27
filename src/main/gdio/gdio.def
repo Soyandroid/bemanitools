@@ -4,14 +4,16 @@ EXPORTS
     gd_io_fini
     gd_io_get_sys_inputs
     gd_io_get_dm_drum_pads
-	gd_io_get_dm_drum_pedals
+    gd_io_get_dm_drum_pedals
     gd_io_get_dm_panel_inputs
-	gd_io_get_gf_guitar_inputs
+    gd_io_get_gf_guitar_inputs
     gd_io_get_gf_panel_inputs
     gd_io_init
-    gd_io_read_inputs
-	gd_io_set_led
-	gd_io_set_light
+    gd_io_read_dm_inputs
+    gd_io_read_gf_inputs
+    gd_io_read_p4io_inputs
+    gd_io_set_led
+    gd_io_set_light
     gd_io_set_loggers
     gd_io_set_rgb_led
     gd_io_write_outputs

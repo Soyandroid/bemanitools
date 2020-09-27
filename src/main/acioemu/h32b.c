@@ -11,8 +11,6 @@
 
 #include "acioemu/emu.h"
 
-// #include "bemanitools/gdio.h"
-
 #include "util/hex.h"
 
 static void ac_io_emu_h32b_cmd_send_version(

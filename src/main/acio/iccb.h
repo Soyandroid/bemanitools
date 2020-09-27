@@ -11,13 +11,17 @@ enum ac_io_iccb_cmd {
     /* found on jubeat prop, sent after 0100 req */
     AC_IO_ICCB_CMD_UNK_0120 = 0x0120,
     AC_IO_ICCB_CMD_QUEUE_LOOP_START = 0x0130,
+    AC_IO_ICCB_CMD_READ_CARD_OLD = 0x0131,
     AC_IO_ICCB_CMD_POLL = 0x0134,
-    AC_IO_ICCB_CMD_UNK_135 = 0x0135,
+    AC_IO_ICCB_CMD_SET_STATE = 0x0135,
     AC_IO_ICCB_CMD_SLEEP = 0x013A,
-    AC_IO_ICCB_CMD_READ_CARD = 0x0161
+    AC_IO_ICCB_CMD_KEY_EXCHANGE = 0x0160,
+    AC_IO_ICCB_CMD_READ_CARD = 0x0161,
+    AC_IO_ICCB_CMD_POLL_ENC = 0x0164
 };
 
 enum ac_io_iccb_sensor_state {
+    AC_IO_ICCB_SENSOR_BUSY = 0x01,
     AC_IO_ICCB_SENSOR_CARD = 0x02,
     AC_IO_ICCB_SENSOR_NO_CARD = 0x04
 };
@@ -40,7 +44,8 @@ struct ac_io_iccb_state {
     uint8_t uid[8];
     uint8_t unk2;
     uint8_t unk3;
-    uint8_t unk4[4];
+    uint8_t key_events[2];
+    uint16_t key_state;
 };
 
 #pragma pack(pop)

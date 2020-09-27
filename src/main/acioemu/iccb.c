@@ -79,7 +79,7 @@ void ac_io_emu_iccb_dispatch_request(
 
             break;
 
-        case AC_IO_ICCB_CMD_UNK_135:
+        case AC_IO_ICCB_CMD_SET_STATE:
             /* log_misc("AC_IO_ICCB_CMD_UNK_135"); */
             ac_io_emu_iccb_send_state(iccb, req);
 
@@ -213,7 +213,9 @@ static void ac_io_emu_iccb_send_state(
     // this doesn't seem to be an error code. If this is not set to 0x03
     // on slotted readers (only?), the game throws an unknown status error
     body->unk3 = 0x03;
-    memset(body->unk4, 0, sizeof(body->unk4));
+    body->key_events[0] = 0;
+    body->key_events[1] = 0;
+    body->key_state = 0;
 
     ac_io_emu_response_push(iccb->emu, &resp, 0);
 }

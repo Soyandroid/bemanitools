@@ -33,6 +33,15 @@ static struct ac_io_emu ac_io_emu;
 static struct ac_io_emu_h32b ac_io_emu_h32b[3];
 static uint8_t ac_io_ledunit_cnt;
 
+enum {
+    GDHOOK_LEDUNIT_GAME_GUITAR_XG = 0x10,
+    GDHOOK_LEDUNIT_GAME_GUITAR_SD = 0x11,
+    GDHOOK_LEDUNIT_GAME_GUITAR_GD = 0x12,
+    GDHOOK_LEDUNIT_GAME_DRUM_XG = 0x20,
+    GDHOOK_LEDUNIT_GAME_DRUM_SD = 0x21,
+    GDHOOK_LEDUNIT_GAME_DRUM_GD = 0x22,
+};
+
 static void lights_dispatcher_gf_main(
     struct ac_io_emu_h32b *emu, const struct ac_io_message *req)
 {

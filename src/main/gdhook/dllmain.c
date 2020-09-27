@@ -21,7 +21,8 @@
 
 #include "gdhook/cardunit.h"
 #include "gdhook/ledunit.h"
-#include "gdhook/io.h"
+#include "gdhook/p4io.h"
+#include "gdhook/guitarunit.h"
 #include "gdhook/config.h"
 
 #include "p4ioemu/device.h"
@@ -38,6 +39,8 @@
 #define GDHOOK_CMD_USAGE \
     "Usage: launcher.exe -K gdhook.dll <gdxg.dll> [options...]"
 
+static uint8_t game_type;
+
 static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 {
     bool eam_io_ok;
@@ -53,7 +56,6 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     struct property_node *cmdline;
 
 	uint8_t cardunit_count;
-    uint8_t ledunit_type;
 
 	p_myparam = NULL;
 	my_property_object = NULL;
@@ -61,7 +63,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     gd_io_ok = false;
 
 	cardunit_count = 2;
-    ledunit_type = GDHOOK_CONFIG_GAME_GUITAR;
+    game_type = GDHOOK_CONFIG_GAME_GUITAR;
 
     log_info("--- Begin gdhook dll_entry_init ---");
 
@@ -86,11 +88,11 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 	switch (sidcode[4]) {
         case 'A':
             strcpy_s(gdhook_param_cmdline, 1024, "-g -GF ");
-            ledunit_type = GDHOOK_CONFIG_GAME_GUITAR;
+            game_type = GDHOOK_CONFIG_GAME_GUITAR;
             break;
         case 'B':
             strcpy_s(gdhook_param_cmdline, 1024, "-d -DM ");
-            ledunit_type = GDHOOK_CONFIG_GAME_DRUM;
+            game_type = GDHOOK_CONFIG_GAME_DRUM;
             cardunit_count = 1;
             break;
         default:
@@ -99,6 +101,9 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 
 	if (gdhook_cfg.is_windowed)
         strcat_s(gdhook_param_cmdline, 1024, "-WINDOW ");
+
+	strcat_s(gdhook_param_cmdline, 1024, gdhook_cfg.cmdline_app);
+    strcat_s(gdhook_param_cmdline, 1024, " ");
 
     cmdline = NULL;
     if (param) {
@@ -135,17 +140,17 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 	cabtype_override = 0;
     switch (gdhook_cfg.cab_type) {
         case GDHOOK_CONFIG_CABTYPE_XG:
-            ledunit_type |= GDHOOK_CONFIG_CABTYPE_XG;
+            game_type |= GDHOOK_CONFIG_CABTYPE_XG;
         default:
             break;
         case GDHOOK_CONFIG_CABTYPE_GD:
             cabtype_override |= 0x0C;
             cardunit_count = 1;
-            ledunit_type |= GDHOOK_CONFIG_CABTYPE_GD;
+            game_type |= GDHOOK_CONFIG_CABTYPE_GD;
             break;
         case GDHOOK_CONFIG_CABTYPE_SD:
             cabtype_override |= 0x08;
-            ledunit_type |= GDHOOK_CONFIG_CABTYPE_SD;
+            game_type |= GDHOOK_CONFIG_CABTYPE_SD;
             break;
 	}
 
@@ -153,14 +158,13 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     p4io_uart_set_path(0, L"COM4");
     p4io_uart_set_path(1, L"COM5");
 
-	if (ledunit_type & GDHOOK_CONFIG_GAME_DRUM) {
-        p4ioemu_init(gdhook_io_dm_init(cabtype_override));
+	if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
+        p4ioemu_init(gdhook_p4io_dm_init(cabtype_override));
     } else {
-        p4ioemu_init(gdhook_io_gf_init(cabtype_override));
+        p4ioemu_init(gdhook_p4io_gf_init(cabtype_override));
     }
-    
 
-    log_info("Starting up GITADORA IO backend");
+    log_info("Starting up GITADORA P4IO backend");
 
     gd_io_set_loggers(
         log_impl_misc, log_impl_info, log_impl_warning, log_impl_fatal);
@@ -188,7 +192,14 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     }
 
 	/* ledunit init */
-    ledunit_init(ledunit_type);
+    ledunit_init(game_type);
+
+	/* game io init */
+    if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
+//        drumunit_init();
+    } else {
+        guitarunit_init(game_type & 0x03);
+	}
 
     log_info("---  End  gdhook dll_entry_init ---");
 
@@ -224,8 +235,16 @@ static bool my_dll_entry_main(void)
     log_info("Shutting down card reader backend");
     eam_io_fini();
 
-    log_info("Shutting down Jubeat IO backend");
+    log_info("Shutting down GITADORA IO backend");
     gd_io_fini();
+
+    if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
+        //        drumunit_fini();
+    } else {
+        guitarunit_fini();
+    }
+
+	ledunit_fini();
 
     cardunit_fini();
 
@@ -247,6 +266,9 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     iohook_push_handler(p4ioemu_dispatch_irp);
     iohook_push_handler(cardunit_dispatch_irp);
+    iohook_push_handler(ledunit_dispatch_irp);
+    iohook_push_handler(guitarunit1_dispatch_irp);
+    iohook_push_handler(guitarunit2_dispatch_irp);
 
 	adapter_hook_init();
     rs232_hook_init();

@@ -136,7 +136,11 @@ void gd_io_fini(void);
 
 /* TODO doc */
 
-bool gd_io_read_inputs(void);
+bool gd_io_read_p4io_inputs(void);
+
+bool gd_io_read_gf_inputs(uint8_t player_no);
+
+bool gd_io_read_dm_inputs(void);
 
 bool gd_io_write_outputs(void);
 

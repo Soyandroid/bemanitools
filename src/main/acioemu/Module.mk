@@ -8,5 +8,7 @@ src_acioemu     := \
     hdxs.c \
     icca.c \
     iccb.c \
+    j32d.c \
+    j33i.c \
     pipe.c \
 

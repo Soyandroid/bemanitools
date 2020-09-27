@@ -20,6 +20,7 @@ libs_gdhook       := \
 src_gdhook        := \
     cardunit.c \
     dllmain.c \
-    io.c \
+    p4io.c \
     ledunit.c \
+    guitarunit.c \
     config.c

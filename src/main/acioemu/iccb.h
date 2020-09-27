@@ -11,6 +11,7 @@ struct ac_io_emu_iccb {
     uint8_t unit_no;
     bool fault;
     bool last_sensor;
+    bool is_support_0x60;
     uint8_t uid[8];
     uint8_t card_result;
 };

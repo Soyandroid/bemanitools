@@ -80,7 +80,7 @@ void gd_io_fini(void)
     timeEndPeriod(1);
 }
 
-bool gd_io_read_inputs(void)
+bool gd_io_read_p4io_inputs(void)
 {
     uint64_t inputs;
     /* Sleep first: input is timestamped immediately AFTER the ioctl returns.
@@ -91,29 +91,51 @@ bool gd_io_read_inputs(void)
 
     Sleep(1);
 
-    /* Update all of our input state here. */
-
+    /* Update python 4 input state here. */
     inputs = (uint64_t) mapper_update();
 
-    /* Mask out the stuff provided by geninput and store the panel/button state
-       for later retrieval via jb_io_get_buttons() */
-
-    gd_io_guitar[0] = inputs & 0x3FF;
-    gd_io_guitar[1] = (inputs >> 10) & 0x3FF;
     gd_io_p4io[0] = (inputs >> 20) & 0x3FF;
     gd_io_p4io[1] = (inputs >> 30) & 0x3FF;
+
+    gd_io_sys_buttons = (inputs >> 49) & 0x07;
+
+    return true;
+}
+
+bool gd_io_read_dm_inputs(void)
+{
+    uint64_t inputs;
+
+    Sleep(1);
+
+    /* Update all of our input state here. */
+    inputs = (uint64_t) mapper_update();
 
     gd_io_drum_pads_key = (inputs >> 40) & 0x7F;
     gd_io_drum_pedal = (inputs >> 47) & 0x03;
 
-    gd_io_sys_buttons = (inputs >> 49) & 0x07;
+    /* Setting pads, needs MIDI support for GITADORA */
 
-	/* Setting pads, needs MIDI support for GITADORA */
-
-	/* Use key binding for setting pads value */
+    /* Use key binding for setting pads value */
     for (int pad_type = 0; pad_type < 7; pad_type++)
         gd_io_drum_pads[pad_type] |=
             gd_io_drum_pads_key & (1 << pad_type) ? 512 : 0;
+
+    return true;
+}
+
+bool gd_io_read_gf_inputs(uint8_t player_no)
+{
+    uint64_t inputs;
+
+    Sleep(1);
+
+    /* Update all of our input state here. */
+
+    inputs = (uint64_t) mapper_update();
+    player_no = player_no & 1;
+
+    gd_io_guitar[player_no] = (inputs >> (10 * player_no)) & 0x3FF;
 
     return true;
 }
@@ -155,7 +177,10 @@ uint8_t gd_io_get_dm_drum_pedals(void)
 
 int16_t gd_io_get_dm_drum_pads(uint8_t pad_type)
 {
-    return gd_io_drum_pads[pad_type];
+    if (pad_type >= 0 && pad_type <= 6) {
+        return gd_io_drum_pads[pad_type];
+    }
+    return 0;
 }
 
 void gd_io_set_rgb_led(enum gd_io_rgb_led unit, uint8_t r, uint8_t g, uint8_t b)

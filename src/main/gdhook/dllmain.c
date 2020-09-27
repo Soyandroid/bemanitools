@@ -20,10 +20,11 @@
 #include "imports/avs.h"
 
 #include "gdhook/cardunit.h"
+#include "gdhook/config.h"
+#include "gdhook/drumunit.h"
+#include "gdhook/guitarunit.h"
 #include "gdhook/ledunit.h"
 #include "gdhook/p4io.h"
-#include "gdhook/guitarunit.h"
-#include "gdhook/config.h"
 
 #include "p4ioemu/device.h"
 #include "p4ioemu/setupapi.h"
@@ -33,8 +34,8 @@
 #include "util/log.h"
 #include "util/thread.h"
 
-#define GDHOOK_INFO_HEADER             \
-    "gdhook for GITADORA" \
+#define GDHOOK_INFO_HEADER \
+    "gdhook for GITADORA"  \
     ", build " __DATE__ " " __TIME__ ", gitrev " STRINGIFY(GITREV) "\n"
 #define GDHOOK_CMD_USAGE \
     "Usage: launcher.exe -K gdhook.dll <gdxg.dll> [options...]"
@@ -46,30 +47,30 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     bool eam_io_ok;
     bool gd_io_ok;
     bool dll_entry_init_result;
-    uint8_t cabtype_override; 
+    uint8_t cabtype_override;
     struct cconfig *config;
     struct gdhook_config gdhook_cfg;
     char gdhook_param_cmdline[1024];
 
-	uint8_t *my_property_object;
-	struct property *p_myparam;
+    uint8_t *my_property_object;
+    struct property *p_myparam;
     struct property_node *cmdline;
 
-	uint8_t cardunit_count;
+    uint8_t cardunit_count;
 
-	p_myparam = NULL;
-	my_property_object = NULL;
+    p_myparam = NULL;
+    my_property_object = NULL;
     eam_io_ok = false;
     gd_io_ok = false;
 
-	cardunit_count = 2;
+    cardunit_count = 2;
     game_type = GDHOOK_CONFIG_GAME_GUITAR;
 
     log_info("--- Begin gdhook dll_entry_init ---");
 
-	config = cconfig_init();
+    config = cconfig_init();
 
-	gdhook_config_init(config);
+    gdhook_config_init(config);
 
     if (!cconfig_hook_config_init(
             config,
@@ -79,13 +80,13 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
         exit(EXIT_FAILURE);
     }
 
-	gdhook_config_get(&gdhook_cfg, config);
+    gdhook_config_get(&gdhook_cfg, config);
 
-	cconfig_finit(config);
+    cconfig_finit(config);
 
-	/* modify /param here */
+    /* modify /param here */
     gdhook_param_cmdline[0] = 0;
-	switch (sidcode[4]) {
+    switch (sidcode[4]) {
         case 'A':
             strcpy_s(gdhook_param_cmdline, 1024, "-g -GF ");
             game_type = GDHOOK_CONFIG_GAME_GUITAR;
@@ -97,12 +98,12 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
             break;
         default:
             break;
-	}
+    }
 
-	if (gdhook_cfg.is_windowed)
+    if (gdhook_cfg.is_windowed)
         strcat_s(gdhook_param_cmdline, 1024, "-WINDOW ");
 
-	strcat_s(gdhook_param_cmdline, 1024, gdhook_cfg.cmdline_app);
+    strcat_s(gdhook_param_cmdline, 1024, gdhook_cfg.cmdline_app);
     strcat_s(gdhook_param_cmdline, 1024, " ");
 
     cmdline = NULL;
@@ -121,7 +122,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
         cmdline = NULL;
     }
 
-	my_property_object = (uint8_t *) malloc(10 * 1024);
+    my_property_object = (uint8_t *) malloc(10 * 1024);
     if (my_property_object) {
         p_myparam = property_create(
             PROPERTY_FLAG_READ | PROPERTY_FLAG_WRITE | PROPERTY_FLAG_CREATE |
@@ -129,15 +130,19 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
             my_property_object,
             10 * 1024);
         cmdline = property_node_create(
-            p_myparam, NULL, PROPERTY_TYPE_STR, "/param/cmdline", gdhook_param_cmdline);
+            p_myparam,
+            NULL,
+            PROPERTY_TYPE_STR,
+            "/param/cmdline",
+            gdhook_param_cmdline);
         if (cmdline) {
             property_node_datasize(cmdline);
         }
         param = property_search(p_myparam, NULL, "/param");
-	}
+    }
 
-	/* p4ioemu init */
-	cabtype_override = 0;
+    /* p4ioemu init */
+    cabtype_override = 0;
     switch (gdhook_cfg.cab_type) {
         case GDHOOK_CONFIG_CABTYPE_XG:
             game_type |= GDHOOK_CONFIG_CABTYPE_XG;
@@ -152,13 +157,13 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
             cabtype_override |= 0x08;
             game_type |= GDHOOK_CONFIG_CABTYPE_SD;
             break;
-	}
+    }
 
-	/* add acio device to p4io sci ports */
+    /* add acio device to p4io sci ports */
     p4io_uart_set_path(0, L"COM4");
     p4io_uart_set_path(1, L"COM5");
 
-	if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
+    if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
         p4ioemu_init(gdhook_p4io_dm_init(cabtype_override));
     } else {
         p4ioemu_init(gdhook_p4io_gf_init(cabtype_override));
@@ -176,7 +181,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
         goto fail;
     }
 
-	/* cardunit init */
+    /* cardunit init */
     cardunit_init(cardunit_count);
 
     log_info("Starting up card reader backend");
@@ -191,28 +196,28 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
         goto fail;
     }
 
-	/* ledunit init */
+    /* ledunit init */
     ledunit_init(game_type);
 
-	/* game io init */
+    /* game io init */
     if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
-//        drumunit_init();
+        drumunit_init();
     } else {
         guitarunit_init(game_type & 0x03);
-	}
+    }
 
     log_info("---  End  gdhook dll_entry_init ---");
 
     dll_entry_init_result = app_hook_invoke_init(sidcode, param);
 
-	if (p_myparam) {
+    if (p_myparam) {
         property_destroy(p_myparam);
     }
     if (my_property_object) {
         free(my_property_object);
     }
 
-	return dll_entry_init_result;
+    return dll_entry_init_result;
 
 fail:
     if (eam_io_ok) {
@@ -239,12 +244,12 @@ static bool my_dll_entry_main(void)
     gd_io_fini();
 
     if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
-        //        drumunit_fini();
+        drumunit_fini();
     } else {
         guitarunit_fini();
     }
 
-	ledunit_fini();
+    ledunit_fini();
 
     cardunit_fini();
 
@@ -269,11 +274,12 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
     iohook_push_handler(ledunit_dispatch_irp);
     iohook_push_handler(guitarunit1_dispatch_irp);
     iohook_push_handler(guitarunit2_dispatch_irp);
+    iohook_push_handler(drumunit_dispatch_irp);
 
-	adapter_hook_init();
+    adapter_hook_init();
     rs232_hook_init();
 
-	hook_setupapi_init(&p4ioemu_setupapi_data);
+    hook_setupapi_init(&p4ioemu_setupapi_data);
 
     return TRUE;
 }

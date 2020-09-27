@@ -152,7 +152,7 @@ uint16_t gd_io_get_gf_guitar_inputs(uint8_t player_no);
 
 uint8_t gd_io_get_dm_panel_inputs(void);
 
-uint8_t gd_io_get_dm_drum_pedals(void);
+uint16_t gd_io_get_dm_drum_inputs(void);
 
 int16_t gd_io_get_dm_drum_pads(uint8_t pad_type);
 

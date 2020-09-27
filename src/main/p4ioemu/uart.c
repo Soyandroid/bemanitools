@@ -30,8 +30,7 @@ static HANDLE p4io_uart_fds[2];
 static uint8_t p4io_break[2];
 
 static const uint32_t p4io_uart_baud_codes[] = {
-    9600, 19200, 38400, 57600, 115200
-};
+    9600, 19200, 38400, 57600, 115200};
 
 void p4io_uart_set_path(size_t uart_no, const wchar_t *path)
 {
@@ -87,7 +86,7 @@ void p4io_uart_cmd_open(const struct p4io_sci_open_req *req)
     }
 
 end:
-	// we don't need to returns anything
+    // we don't need to returns anything
     ;
 }
 
@@ -101,7 +100,7 @@ void p4io_uart_cmd_break(const struct p4io_sci_break_req *req)
         goto end;
     }
 
-	p4io_break[req->port_sci] = req->break_sci;
+    p4io_break[req->port_sci] = req->break_sci;
 
 end:
     // we don't need to returns anything
@@ -121,32 +120,32 @@ uint8_t p4io_uart_cmd_update(
     log_assert(req != NULL);
     log_assert(resp != NULL);
 
-	resp->port_sci = req->port_sci;
+    resp->port_sci = req->port_sci;
     resp->break_sci = p4io_break[req->port_sci];
     ret = 2;
 
-	if (resp->break_sci > 0) {
-		/* break state, should hold write+read or just read? */
+    if (resp->break_sci > 0) {
+        /* break state, should hold write+read or just read? */
         goto end;
-	}
+    }
 
-	if (p4io_uart_fds[req->port_sci] == NULL) {
+    if (p4io_uart_fds[req->port_sci] == NULL) {
         /* try to update from an unopened port */
         goto end;
-	}
+    }
 
-	c_iobuf.bytes = req->payload_sci;
+    c_iobuf.bytes = req->payload_sci;
     c_iobuf.nbytes = sz_req;
     c_iobuf.pos = 0;
 
-	if (req->port_sci > 1) {
+    if (req->port_sci > 1) {
         log_warning("Invalid UART number %i", req->port_sci);
         hr = E_INVALIDARG;
 
         goto end;
     }
 
-	if (sz_req > 59) {
+    if (sz_req > 59) {
         log_warning("Too many bytes to write (%d)", sz_req);
         hr = E_INVALIDARG;
 
@@ -155,7 +154,7 @@ uint8_t p4io_uart_cmd_update(
 
     hr = p4io_uart_write(p4io_uart_fds[req->port_sci], &c_iobuf);
 
-	iobuf.bytes = resp->payload_sci;
+    iobuf.bytes = resp->payload_sci;
     iobuf.nbytes = 59;
     iobuf.pos = 0;
 
@@ -168,7 +167,7 @@ uint8_t p4io_uart_cmd_update(
 
     hr = p4io_uart_read(p4io_uart_fds[req->port_sci], &iobuf);
 
-	if (!FAILED(S_OK)) {
+    if (!FAILED(S_OK)) {
         /* Read success */
         ret += iobuf.pos;
     }

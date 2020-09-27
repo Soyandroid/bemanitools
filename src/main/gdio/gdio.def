@@ -3,8 +3,8 @@ LIBRARY gdio
 EXPORTS
     gd_io_fini
     gd_io_get_sys_inputs
+    gd_io_get_dm_drum_inputs
     gd_io_get_dm_drum_pads
-    gd_io_get_dm_drum_pedals
     gd_io_get_dm_panel_inputs
     gd_io_get_gf_guitar_inputs
     gd_io_get_gf_panel_inputs

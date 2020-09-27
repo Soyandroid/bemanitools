@@ -21,6 +21,9 @@ static void ac_io_emu_j32d_send_status(
     const struct ac_io_message *req,
     uint8_t status);
 
+static void ac_io_emu_j32d_send_empty(
+    struct ac_io_emu_j32d *j32d, const struct ac_io_message *req);
+
 void ac_io_emu_j32d_init(
     struct ac_io_emu_j32d *j32d,
     struct ac_io_emu *emu,
@@ -29,7 +32,7 @@ void ac_io_emu_j32d_init(
     memset(j32d, 0, sizeof(*j32d));
     j32d->emu = emu;
 
-	if (dispatcher == NULL) {
+    if (dispatcher == NULL) {
         log_warning("NULL dispatcher, J32D IO won't work");
     }
     j32d->cmd_dispatcher = dispatcher;
@@ -55,15 +58,28 @@ void ac_io_emu_j32d_dispatch_request(
 
             break;
 
+        case AC_IO_CMD_CLEAR:
+            log_misc("AC_IO_CMD_CLEAR(%d)", req->addr);
+            ac_io_emu_j32d_send_status(j32d, req, 0x00);
+
+            break;
+
+        case AC_IO_CMD_KEEPALIVE:
+            log_misc("AC_IO_CMD_KEEPALIVE(%d)", req->addr);
+            ac_io_emu_j32d_send_empty(j32d, req);
+
+            break;
+
         case AC_IO_CMD_J32D_IO_AUTOGET_START:
+            ac_io_emu_j32d_send_status(j32d, req, 0x00);
+
             if (j32d->cmd_dispatcher->autoget_start != NULL) {
                 j32d->cmd_dispatcher->autoget_start(j32d, req);
             }
 
-            ac_io_emu_j32d_send_status(j32d, req, 0x00);
             break;
 
-		case AC_IO_CMD_J32D_IO_AUTOGET_DATA:
+        case AC_IO_CMD_J32D_IO_AUTOGET_DATA:
             /* not called, only for loop response */
             break;
 
@@ -113,6 +129,19 @@ static void ac_io_emu_j32d_send_status(
     resp.cmd.seq_no = req->cmd.seq_no;
     resp.cmd.nbytes = sizeof(resp.cmd.status);
     resp.cmd.status = status;
+
+    ac_io_emu_response_push(j32d->emu, &resp, 0);
+}
+
+static void ac_io_emu_j32d_send_empty(
+    struct ac_io_emu_j32d *j32d, const struct ac_io_message *req)
+{
+    struct ac_io_message resp;
+
+    resp.addr = req->addr | AC_IO_RESPONSE_FLAG;
+    resp.cmd.code = req->cmd.code;
+    resp.cmd.seq_no = req->cmd.seq_no;
+    resp.cmd.nbytes = 0;
 
     ac_io_emu_response_push(j32d->emu, &resp, 0);
 }

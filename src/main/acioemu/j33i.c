@@ -21,6 +21,9 @@ static void ac_io_emu_j33i_send_status(
     const struct ac_io_message *req,
     uint8_t status);
 
+static void ac_io_emu_j33i_send_empty(
+    struct ac_io_emu_j33i *j33i, const struct ac_io_message *req);
+
 void ac_io_emu_j33i_init(
     struct ac_io_emu_j33i *j33i,
     struct ac_io_emu *emu,
@@ -29,7 +32,7 @@ void ac_io_emu_j33i_init(
     memset(j33i, 0, sizeof(*j33i));
     j33i->emu = emu;
 
-	if (dispatcher == NULL) {
+    if (dispatcher == NULL) {
         log_warning("NULL dispatcher, J33I IO won't work");
     }
     j33i->cmd_dispatcher = dispatcher;
@@ -55,7 +58,21 @@ void ac_io_emu_j33i_dispatch_request(
 
             break;
 
+        case AC_IO_CMD_CLEAR:
+            log_misc("AC_IO_CMD_CLEAR(%d)", req->addr);
+            ac_io_emu_j33i_send_status(j33i, req, 0x00);
+
+            break;
+
+        case AC_IO_CMD_KEEPALIVE:
+            log_misc("AC_IO_CMD_KEEPALIVE(%d)", req->addr);
+            ac_io_emu_j33i_send_empty(j33i, req);
+
+            break;
+
         case AC_IO_CMD_J33I_IO_AUTOGET_START:
+            ac_io_emu_j33i_send_status(j33i, req, 0x00);
+
             if (j33i->cmd_dispatcher->autoget_start != NULL) {
                 j33i->cmd_dispatcher->autoget_start(j33i, req);
             }
@@ -69,7 +86,7 @@ void ac_io_emu_j33i_dispatch_request(
 
             break;
 
-		case AC_IO_CMD_J33I_IO_AUTOGET_DATA:
+        case AC_IO_CMD_J33I_IO_AUTOGET_DATA:
             /* not called, only for loop response */
             break;
 
@@ -119,6 +136,19 @@ static void ac_io_emu_j33i_send_status(
     resp.cmd.seq_no = req->cmd.seq_no;
     resp.cmd.nbytes = sizeof(resp.cmd.status);
     resp.cmd.status = status;
+
+    ac_io_emu_response_push(j33i->emu, &resp, 0);
+}
+
+static void ac_io_emu_j33i_send_empty(
+    struct ac_io_emu_j33i *j33i, const struct ac_io_message *req)
+{
+    struct ac_io_message resp;
+
+    resp.addr = req->addr | AC_IO_RESPONSE_FLAG;
+    resp.cmd.code = req->cmd.code;
+    resp.cmd.seq_no = req->cmd.seq_no;
+    resp.cmd.nbytes = 0;
 
     ac_io_emu_response_push(j33i->emu, &resp, 0);
 }

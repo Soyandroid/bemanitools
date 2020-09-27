@@ -13,7 +13,7 @@
 
 #include "acioemu/addr.h"
 #include "acioemu/emu.h"
-#include "acioemu/iccb.h"
+#include "acioemu/icca.h"
 
 #include "hook/iohook.h"
 
@@ -28,15 +28,15 @@
 #include "util/str.h"
 
 static struct ac_io_emu ac_io_emu;
-static struct ac_io_emu_iccb ac_io_emu_iccb[2];
+static struct ac_io_emu_icca ac_io_emu_icca[2];
 static uint8_t ac_io_cardunit_cnt;
 
 void cardunit_init(uint8_t total_cardunit)
 {
     ac_io_emu_init(&ac_io_emu, L"COM4");
     ac_io_cardunit_cnt = total_cardunit;
-    for (int i = 0; i < lengthof(ac_io_emu_iccb) && i < ac_io_cardunit_cnt; i++)
-		ac_io_emu_iccb_init(&ac_io_emu_iccb[i], &ac_io_emu, i);
+    for (int i = 0; i < lengthof(ac_io_emu_icca) && i < ac_io_cardunit_cnt; i++)
+        ac_io_emu_icca_init(&ac_io_emu_icca[i], &ac_io_emu, i);
 }
 
 void cardunit_fini(void)
@@ -72,17 +72,18 @@ cardunit_dispatch_irp(struct irp *irp)
                 break;
 
             case 1:
-                ac_io_emu_iccb_dispatch_request(&ac_io_emu_iccb[0], msg);
+                ac_io_emu_icca_dispatch_request(&ac_io_emu_icca[0], msg);
 
                 break;
 
             case 2:
-                ac_io_emu_iccb_dispatch_request(&ac_io_emu_iccb[1], msg);
+                ac_io_emu_icca_dispatch_request(&ac_io_emu_icca[1], msg);
 
                 break;
 
             case AC_IO_BROADCAST:
-                log_warning("Broadcast(?) message on GITADORA cardunit ACIO bus?");
+                log_warning(
+                    "Broadcast(?) message on GITADORA cardunit ACIO bus?");
 
                 break;
 

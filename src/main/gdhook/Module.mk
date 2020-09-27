@@ -23,4 +23,5 @@ src_gdhook        := \
     p4io.c \
     ledunit.c \
     guitarunit.c \
+    drumunit.c \
     config.c

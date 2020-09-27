@@ -5,7 +5,6 @@
 
 #include "p3io/frame.h"
 
-
 enum {
     P4IO_CMD_INIT = 0x00,
     P4IO_CMD_GET_DEVICE_INFO = 0x01,
@@ -99,9 +98,9 @@ union p4io_resp_any {
 
 #pragma pack(pop)
 
-//uint8_t p3io_req_cmd(const union p3io_req_any *src);
+// uint8_t p3io_req_cmd(const union p3io_req_any *src);
 //
-//void p3io_resp_init(
+// void p3io_resp_init(
 //    struct p3io_hdr *dest, size_t nbytes, const struct p3io_hdr *req);
 
 #endif

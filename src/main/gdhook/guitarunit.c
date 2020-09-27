@@ -29,7 +29,7 @@
 #include "util/log.h"
 #include "util/str.h"
 
-#define GDHOOK_GDIO_TO_ACIO11BITS(x) (((x << 5) & 0xFF00) | ((x & 3) << 4))
+#define GDHOOK_GDIO_TO_ACIO11BITS(x) (((x >> 3) & 0xFF) | ((x & 3) << 10))
 
 static struct ac_io_emu ac_io_emu[2];
 static struct ac_io_emu_j33i ac_io_emu_j33i[2];
@@ -43,6 +43,11 @@ static int guitarunit1_autoget_thread(void *);
 static void guitarunit2_autoget_start(
     struct ac_io_emu_j33i *emu, const struct ac_io_message *req);
 static int guitarunit2_autoget_thread(void *);
+
+/*
+    bemanitools don't have vibration value output or something like that
+    so we just set the .set_motor_value to NULL since it's unimplemented
+*/
 
 static struct acio_j33i_msg_hook guitar_p1_dispatcher = {
     .autoget_start = guitarunit1_autoget_start, .set_motor_value = NULL};
@@ -87,6 +92,7 @@ void guitarunit_init(uint8_t guitarunit_type)
         log_misc("GITADORA cab mode, only 1 GUITAR UNIT initiated");
     } else {
         guitarunit_init_unit_no(1);
+        log_misc("2 GUITAR UNIT initiated");
     }
 }
 
@@ -94,16 +100,16 @@ void guitarunit_fini(void)
 {
     int thread_result;
 
-    for (int i = 0; i < lengthof(guitar_unit_thread_id); i++) {
-        if (guitar_unit_thread_id[i] != 0) {
-            avs_thread_join(guitar_unit_thread_id[i], &thread_result);
-            avs_thread_destroy(guitar_unit_thread_id[i]);
+    for (int unit_no = 0; unit_no < lengthof(guitar_unit_thread_id);
+         unit_no++) {
+        if (guitar_unit_thread_id[unit_no] != 0) {
+            avs_thread_join(guitar_unit_thread_id[unit_no], &thread_result);
+            avs_thread_destroy(guitar_unit_thread_id[unit_no]);
         }
     }
 
-    ac_io_emu_fini(&ac_io_emu[0]);
-    if (ac_io_guitarunit_cnt == 2) {
-        ac_io_emu_fini(&ac_io_emu[1]);
+    for (int unit_no = 0; unit_no < ac_io_guitarunit_cnt; unit_no++) {
+        ac_io_emu_fini(&ac_io_emu[unit_no]);
     }
 }
 
@@ -184,18 +190,8 @@ static void guitarunit_autoget_start(
         is the log_server.
     */
     HANDLE ready;
-	struct ac_io_message resp;
 
-	/* let the game know we've started autoget first */
-    resp.addr = req->addr | AC_IO_RESPONSE_FLAG;
-    resp.cmd.code = req->cmd.code;
-    resp.cmd.seq_no = req->cmd.seq_no;
-    resp.cmd.nbytes = sizeof(resp.cmd.status);
-    resp.cmd.status = 0;
-
-    ac_io_emu_response_push(emu->emu, &resp, 0);
-
-	/* start the actual autoget here */
+    /* start the actual autoget here */
     unit_no &= 1;
     if (guitar_unit_thread_id[unit_no] != 0) {
         log_warning("guitarunit%d_autoget_thread already running", unit_no);
@@ -265,7 +261,15 @@ static int guitarunit_autoget_thread(uint8_t unit_no)
 
     while (true) {
 
-		if (!gd_io_read_gf_inputs(autoget_unit_no)) {
+        /*
+            it just runs too fast, slow it here
+            real guitar io runs at about 250 ticks per second @ baudrate 115200
+            so adding the sleep from gd_io_read_gf_inputs will get us to ~2ms
+            delay which is pretty close to 250 ticks per second
+        */
+        Sleep(1);
+
+        if (!gd_io_read_gf_inputs(autoget_unit_no)) {
             log_warning(
                 "Reading guitar unit%d inputs from gdio failed",
                 autoget_unit_no);
@@ -326,7 +330,6 @@ static int guitarunit_autoget_thread(uint8_t unit_no)
 
         ac_io_emu_response_push(
             (&ac_io_emu_j33i[autoget_unit_no])->emu, &resp, 0);
-
     }
     return 0;
 }

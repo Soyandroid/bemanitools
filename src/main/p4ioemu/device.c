@@ -69,7 +69,7 @@ static uint32_t p4ioemu_p4io_command_handle(
             return 0;
         }
 
-		case P4IO_CMD_REQ_COINSTOCK: {
+        case P4IO_CMD_REQ_COINSTOCK: {
             // log_misc("P4IO_CMD_REQ_COINSTOCK");
 
             if (p4ioemu_device_msg_hook->get_coinstock) {
@@ -78,8 +78,8 @@ static uint32_t p4ioemu_p4io_command_handle(
                 memset(resp, 0, 4);
             }
 
-			return 4;
-		}
+            return 4;
+        }
 
         case P4IO_CMD_GET_DEVICE_INFO: {
             log_misc("P4IO_CMD_GET_DEVICE_INFO");
@@ -87,7 +87,7 @@ static uint32_t p4ioemu_p4io_command_handle(
             struct p4io_device_info_resp *info =
                 (struct p4io_device_info_resp *) resp;
 
-			memset(resp, 0, sizeof(struct p4io_device_info_resp));
+            memset(resp, 0, sizeof(struct p4io_device_info_resp));
 
             info->type = 0x37133713;
             info->flag = 1;
@@ -150,7 +150,7 @@ static uint32_t p4ioemu_p4io_command_handle(
 
             if (payload_len == 3) {
                 p4io_uart_cmd_open(req);
-			}
+            }
 
             return 0;
         }
@@ -174,7 +174,7 @@ static uint32_t p4ioemu_p4io_command_handle(
             const struct p4io_sci_update_req *req =
                 (const struct p4io_sci_update_req *) payload;
 
-			struct p4io_sci_update_resp *resp_payload =
+            struct p4io_sci_update_resp *resp_payload =
                 (struct p4io_sci_update_resp *) resp;
 
             return p4io_uart_cmd_update(req, payload_len - 1, resp_payload);

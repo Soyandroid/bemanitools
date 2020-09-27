@@ -29,7 +29,7 @@ void ac_io_emu_h32b_init(
     memset(h32b, 0, sizeof(*h32b));
     h32b->emu = emu;
 
-	if (lights_dispatcher == NULL) {
+    if (lights_dispatcher == NULL) {
         log_warning("NULL lights_dispatcher, H32B light output won't work");
     }
     h32b->light_dispatcher = lights_dispatcher;

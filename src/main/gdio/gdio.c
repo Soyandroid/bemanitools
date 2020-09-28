@@ -152,7 +152,8 @@ void gd_io_set_loggers(
 #endif
 }
 
-bool gd_io_init(
+#if 0
+static bool gd_io_init(
     thread_create_t thread_create,
     thread_join_t thread_join,
     thread_destroy_t thread_destroy)
@@ -161,6 +162,37 @@ bool gd_io_init(
 
     input_init(thread_create, thread_join, thread_destroy);
     mapper_config_load("gd");
+
+    /* Initialize your own IO devices here. Log something and then return
+       false if the initialization fails. */
+    return true;
+}
+#endif
+
+bool gd_io_gf_init(
+    thread_create_t thread_create,
+    thread_join_t thread_join,
+    thread_destroy_t thread_destroy)
+{
+    timeBeginPeriod(1);
+
+    input_init(thread_create, thread_join, thread_destroy);
+    mapper_config_load("gfxg");
+
+    /* Initialize your own IO devices here. Log something and then return
+       false if the initialization fails. */
+    return true;
+}
+
+bool gd_io_dm_init(
+    thread_create_t thread_create,
+    thread_join_t thread_join,
+    thread_destroy_t thread_destroy)
+{
+    timeBeginPeriod(1);
+
+    input_init(thread_create, thread_join, thread_destroy);
+    mapper_config_load("dmxg");
 
     /* Initialize your own IO devices here. Log something and then return
        false if the initialization fails. */

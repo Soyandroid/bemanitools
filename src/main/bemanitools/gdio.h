@@ -125,7 +125,12 @@ void gd_io_set_loggers(
 
    See glue.h and geninput.h for further details. */
 
-bool gd_io_init(
+bool gd_io_gf_init(
+    thread_create_t thread_create,
+    thread_join_t thread_join,
+    thread_destroy_t thread_destroy);
+
+bool gd_io_dm_init(
     thread_create_t thread_create,
     thread_join_t thread_join,
     thread_destroy_t thread_destroy);

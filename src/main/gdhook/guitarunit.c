@@ -33,7 +33,7 @@
 
 static struct ac_io_emu ac_io_emu[2];
 static struct ac_io_emu_j33i ac_io_emu_j33i[2];
-static uint8_t ac_io_guitarunit_cnt;
+static uint8_t ac_io_guitarunit_flag;
 static int guitar_unit_thread_id[2];
 
 static void guitarunit1_autoget_start(
@@ -55,12 +55,6 @@ static struct acio_j33i_msg_hook guitar_p1_dispatcher = {
 static struct acio_j33i_msg_hook guitar_p2_dispatcher = {
     .autoget_start = guitarunit2_autoget_start, .set_motor_value = NULL};
 
-enum {
-    GDHOOK_GUITARUNIT_CABTYPE_XG = 0x00,
-    GDHOOK_GUITARUNIT_CABTYPE_SD = 0x01,
-    GDHOOK_GUITARUNIT_CABTYPE_GD = 0x02,
-};
-
 enum ac_io_j33i_cmd {
     AC_IO_CMD_J33I_IO_AUTOGET_START = 0x0120,
     AC_IO_CMD_J33I_IO_AUTOGET_DATA = 0x012F,
@@ -78,21 +72,22 @@ static void guitarunit_init_unit_no(uint8_t unit_no)
         &ac_io_emu[unit_no],
         unit_no == 0 ? &guitar_p1_dispatcher : &guitar_p2_dispatcher);
 
-    ac_io_guitarunit_cnt++;
+    ac_io_guitarunit_flag |= 1 << unit_no;
 }
 
 void guitarunit_init(uint8_t guitarunit_type)
 {
     memset(guitar_unit_thread_id, 0, sizeof(guitar_unit_thread_id));
-    ac_io_guitarunit_cnt = 0;
+    ac_io_guitarunit_flag = 0;
 
-    guitarunit_init_unit_no(0);
+    if (guitarunit_type & GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT1) {
+        guitarunit_init_unit_no(0);
+        log_misc("GUITAR UNIT 0 initiated");
+    }
 
-    if (guitarunit_type & GDHOOK_GUITARUNIT_CABTYPE_GD) {
-        log_misc("GITADORA cab mode, only 1 GUITAR UNIT initiated");
-    } else {
+    if (guitarunit_type & GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT2) {
         guitarunit_init_unit_no(1);
-        log_misc("2 GUITAR UNIT initiated");
+        log_misc("GUITAR UNIT 1 initiated");
     }
 }
 
@@ -108,8 +103,10 @@ void guitarunit_fini(void)
         }
     }
 
-    for (int unit_no = 0; unit_no < ac_io_guitarunit_cnt; unit_no++) {
-        ac_io_emu_fini(&ac_io_emu[unit_no]);
+    for (int unit_no = 0; unit_no < 2; unit_no++) {
+        if (ac_io_guitarunit_flag & (1 << unit_no)) {
+            ac_io_emu_fini(&ac_io_emu[unit_no]);
+        }
     }
 }
 
@@ -279,6 +276,11 @@ static int guitarunit_autoget_thread(uint8_t unit_no)
         /* read inputs here */
         guitar_inputs = gd_io_get_gf_guitar_inputs(autoget_unit_no);
 
+        /*
+            the range of these 3 sensors should be -180 to 180
+            can't solid confirm 'cuz i don't want to swing the controller too much
+            since i'm in a small room
+        */
         x = 0;
         y = 0;
         z = 0;

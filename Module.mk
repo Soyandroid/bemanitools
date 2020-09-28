@@ -518,7 +518,8 @@ $(zipdir)/gd.zip: \
 		build/bin/indep-64/eamio.dll \
 		build/bin/indep-64/geninput.dll \
 		build/bin/indep-64/gdio.dll \
-		dist/gd/config.bat \
+		dist/gd/config-gf.bat \
+		dist/gd/config-dm.bat \
 		dist/gd/gamestart-gf.bat \
 		dist/gd/gamestart-dm.bat \
 		dist/gd/gdhook.conf \
@@ -530,6 +531,7 @@ $(zipdir)/doc.zip: \
 		doc/iidxhook \
 		doc/sdvxhook \
 		doc/jbhook \
+		doc/gdhook \
 		doc/tools \
 		| $(zipdir)/
 	$(V)echo ... $@

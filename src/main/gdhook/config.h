@@ -14,6 +14,10 @@ enum {
 struct gdhook_config {
     int32_t cab_type;
     bool is_windowed;
+    bool disable_gf1_emu;
+    bool disable_gf2_emu;
+    bool disable_dm_emu;
+    bool disable_eamio_emu;
     char cmdline_app[1024];
 };
 

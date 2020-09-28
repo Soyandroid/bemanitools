@@ -284,10 +284,10 @@ static const struct action_def bst_actions[] = {
     {0x04, IDS_GENERIC_SERVICE},
 };
 
-static const struct action_def gd_actions[] = {
+static const struct action_def gdgf_actions[] = {
     {0x31, IDS_GENERIC_TEST},
     {0x32, IDS_GENERIC_SERVICE},
-    
+
     {0x00, IDS_GD_BTN_P1_R},
     {0x01, IDS_GD_BTN_P1_G},
     {0x02, IDS_GD_BTN_P1_B},
@@ -298,7 +298,7 @@ static const struct action_def gd_actions[] = {
     {0x07, IDS_GD_BTN_P1_WAILING_UP},
     {0x08, IDS_GD_BTN_P1_WAILING_DOWN},
     {0x09, IDS_GD_BTN_P1_WAILING_SIDE},
-    
+
     {0x0A, IDS_GD_BTN_P2_R},
     {0x0B, IDS_GD_BTN_P2_G},
     {0x0C, IDS_GD_BTN_P2_B},
@@ -310,16 +310,6 @@ static const struct action_def gd_actions[] = {
     {0x12, IDS_GD_BTN_P2_WAILING_DOWN},
     {0x13, IDS_GD_BTN_P2_WAILING_SIDE},
 
-    {0x28, IDS_GD_PAD_LC},
-    {0x29, IDS_GD_PAD_HH},
-    {0x2A, IDS_GD_PAD_HT},
-    {0x2B, IDS_GD_PAD_SN},
-    {0x2C, IDS_GD_PAD_LT},
-    {0x2D, IDS_GD_PAD_FT},
-    {0x2E, IDS_GD_PAD_RC},
-    {0x2F, IDS_GD_PEDAL_LP},
-    {0x30, IDS_GD_PEDAL_BP},
-
     {0x14, IDS_GD_BTN_P1_START},
     {0x19, IDS_GD_BTN_P1_HELP},
     {0x15, IDS_GD_BTN_P1_UP},
@@ -330,7 +320,7 @@ static const struct action_def gd_actions[] = {
     {0x1B, IDS_GD_BTN_P1_EFF2},
     {0x1C, IDS_GD_BTN_P1_EFF3},
     {0x1D, IDS_GD_BTN_P1_PEDAL},
-    
+
     {0x1E, IDS_GD_BTN_P2_START},
     {0x23, IDS_GD_BTN_P2_HELP},
     {0x1F, IDS_GD_BTN_P2_UP},
@@ -342,14 +332,35 @@ static const struct action_def gd_actions[] = {
     {0x26, IDS_GD_BTN_P2_EFF3},
     {0x27, IDS_GD_BTN_P2_PEDAL},
 
-    };
+};
 
-static const struct light_def gd_lights[] = {
+static const struct action_def gddm_actions[] = {
+    {0x31, IDS_GENERIC_TEST},
+    {0x32, IDS_GENERIC_SERVICE},
+
+    {0x28, IDS_GD_PAD_LC},
+    {0x29, IDS_GD_PAD_HH},
+    {0x2A, IDS_GD_PAD_HT},
+    {0x2B, IDS_GD_PAD_SN},
+    {0x2C, IDS_GD_PAD_LT},
+    {0x2D, IDS_GD_PAD_FT},
+    {0x2E, IDS_GD_PAD_RC},
+    {0x2F, IDS_GD_PEDAL_LP},
+    {0x30, IDS_GD_PEDAL_BP},
+
+
+    {0x14, IDS_GD_BTN_P1_START},
+    {0x19, IDS_GD_BTN_P1_HELP},
+    {0x15, IDS_GD_BTN_P1_UP},
+    {0x16, IDS_GD_BTN_P1_DOWN},
+    {0x17, IDS_GD_BTN_P1_LEFT},
+    {0x18, IDS_GD_BTN_P1_RIGHT},
+};
+
+static const struct light_def gdgf_lights[] = {
     {0x3A, IDS_GD_BTN_P1_START},  {0x3D, IDS_GD_BTN_P1_HELP},  {0x3B, IDS_GD_BTN_P1_UPDOWN},
     {0x3C, IDS_GD_BTN_P1_LEFTRIGHT},  {0x3E, IDS_GD_BTN_P2_START},  {0x41, IDS_GD_BTN_P2_HELP},
-    {0x3F, IDS_GD_BTN_P2_UPDOWN},  {0x40, IDS_GD_BTN_P2_LEFTRIGHT},  {0x42, IDS_GD_PAD_LC},
-    {0x43, IDS_GD_PAD_HH},  {0x44, IDS_GD_PAD_HT},  {0x45, IDS_GD_PAD_SN},
-    {0x46, IDS_GD_PAD_LT},  {0x47, IDS_GD_PAD_FT},  {0x48, IDS_GD_PAD_RC},
+    {0x3F, IDS_GD_BTN_P2_UPDOWN},  {0x40, IDS_GD_BTN_P2_LEFTRIGHT}, 
     {0x0, IDS_GD_RGB1_R},  {0x1, IDS_GD_RGB1_G},  {0x2, IDS_GD_RGB1_B},
     {0x3, IDS_GD_RGB2_R},  {0x4, IDS_GD_RGB2_G},  {0x5, IDS_GD_RGB2_B},
     {0x6, IDS_GD_RGB3_R},  {0x7, IDS_GD_RGB3_G},  {0x8, IDS_GD_RGB3_B},
@@ -364,10 +375,17 @@ static const struct light_def gd_lights[] = {
     {0x21, IDS_GD_RGB12_R},  {0x22, IDS_GD_RGB12_G},  {0x23, IDS_GD_RGB12_B},
     {0x24, IDS_GD_RGB13_R},  {0x25, IDS_GD_RGB13_G},  {0x26, IDS_GD_RGB13_B},
     {0x27, IDS_GD_RGB14_R},  {0x28, IDS_GD_RGB14_G},  {0x29, IDS_GD_RGB14_B},
+    {0x30, IDS_GD_LED1},  {0x31, IDS_GD_LED2},  {0x32, IDS_GD_LED3},
+    {0x33, IDS_GD_LED4}};
+    
+static const struct light_def gddm_lights[] = {
+    {0x3A, IDS_GD_BTN_P1_START},  {0x3D, IDS_GD_BTN_P1_HELP},  {0x3B, IDS_GD_BTN_P1_UPDOWN},
+    {0x3C, IDS_GD_BTN_P1_LEFTRIGHT}, {0x42, IDS_GD_PAD_LC},
+    {0x43, IDS_GD_PAD_HH},  {0x44, IDS_GD_PAD_HT},  {0x45, IDS_GD_PAD_SN},
+    {0x46, IDS_GD_PAD_LT},  {0x47, IDS_GD_PAD_FT},  {0x48, IDS_GD_PAD_RC},
     {0x2A, IDS_GD_RGB15_R},  {0x2B, IDS_GD_RGB15_G},  {0x2C, IDS_GD_RGB15_B},
     {0x2D, IDS_GD_RGB16_R},  {0x2E, IDS_GD_RGB16_G},  {0x2F, IDS_GD_RGB16_B},
-    {0x30, IDS_GD_LED1},  {0x31, IDS_GD_LED2},  {0x32, IDS_GD_LED3},
-    {0x33, IDS_GD_LED4},  {0x34, IDS_GD_LED5},  {0x35, IDS_GD_LED6},
+    {0x34, IDS_GD_LED5},  {0x35, IDS_GD_LED6},
     {0x36, IDS_GD_LED7},  {0x37, IDS_GD_LED8},  {0x38, IDS_GD_LED9},
     {0x39, IDS_GD_LED10}};
 
@@ -474,16 +492,28 @@ const struct schema schemas[] = {
      schema_eam_unit_defs,
      1},
 
-    {"gd",
-     IDS_GD_SCHEMA,
-     gd_actions,
-     lengthof(gd_actions),
-     gd_lights,
-     lengthof(gd_lights),
+    {"gfxg",
+     IDS_GD_GF_SCHEMA,
+     gdgf_actions,
+     lengthof(gdgf_actions),
+     gdgf_lights,
+     lengthof(gdgf_lights),
      NULL,
      0,
      schema_eam_unit_defs,
      2},
+
+    {"dmxg",
+     IDS_GD_DM_SCHEMA,
+     gddm_actions,
+     lengthof(gddm_actions),
+     gddm_lights,
+     lengthof(gddm_lights),
+     NULL,
+     0,
+     schema_eam_unit_defs,
+     1},
+
 };
 
 const size_t nschemas = lengthof(schemas);

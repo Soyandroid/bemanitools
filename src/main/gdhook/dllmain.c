@@ -42,21 +42,21 @@
 
 static uint8_t game_type;
 
+static struct gdhook_config gdhook_cfg;
+
 static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 {
     bool eam_io_ok;
     bool gd_io_ok;
     bool dll_entry_init_result;
     uint8_t cabtype_override;
-    struct cconfig *config;
-    struct gdhook_config gdhook_cfg;
     char gdhook_param_cmdline[1024];
 
     uint8_t *my_property_object;
     struct property *p_myparam;
     struct property_node *cmdline;
 
-    uint8_t cardunit_count;
+    uint8_t cardunit_count, guitarunit_flag;
 
     p_myparam = NULL;
     my_property_object = NULL;
@@ -64,25 +64,11 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     gd_io_ok = false;
 
     cardunit_count = 2;
+    guitarunit_flag = GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT1 |
+        GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT2;
     game_type = GDHOOK_CONFIG_GAME_GUITAR;
 
     log_info("--- Begin gdhook dll_entry_init ---");
-
-    config = cconfig_init();
-
-    gdhook_config_init(config);
-
-    if (!cconfig_hook_config_init(
-            config,
-            GDHOOK_INFO_HEADER "\n" GDHOOK_CMD_USAGE,
-            CCONFIG_CMD_USAGE_OUT_DBG)) {
-        cconfig_finit(config);
-        exit(EXIT_FAILURE);
-    }
-
-    gdhook_config_get(&gdhook_cfg, config);
-
-    cconfig_finit(config);
 
     /* modify /param here */
     gdhook_param_cmdline[0] = 0;
@@ -151,6 +137,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
         case GDHOOK_CONFIG_CABTYPE_GD:
             cabtype_override |= 0x0C;
             cardunit_count = 1;
+            guitarunit_flag = 1;
             game_type |= GDHOOK_CONFIG_CABTYPE_GD;
             break;
         case GDHOOK_CONFIG_CABTYPE_SD:
@@ -174,36 +161,56 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     gd_io_set_loggers(
         log_impl_misc, log_impl_info, log_impl_warning, log_impl_fatal);
 
-    gd_io_ok =
-        gd_io_init(avs_thread_create, avs_thread_join, avs_thread_destroy);
+    if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
+        gd_io_ok = gd_io_dm_init(
+            avs_thread_create, avs_thread_join, avs_thread_destroy);
+    } else {
+        gd_io_ok = gd_io_gf_init(
+            avs_thread_create, avs_thread_join, avs_thread_destroy);
+    }
 
     if (!gd_io_ok) {
         goto fail;
     }
 
     /* cardunit init */
-    cardunit_init(cardunit_count);
 
-    log_info("Starting up card reader backend");
+    if (!gdhook_cfg.disable_eamio_emu) {
+        cardunit_init(cardunit_count);
 
-    eam_io_set_loggers(
-        log_impl_misc, log_impl_info, log_impl_warning, log_impl_fatal);
+        log_info("Starting up card reader backend");
 
-    eam_io_ok =
-        eam_io_init(avs_thread_create, avs_thread_join, avs_thread_destroy);
+        eam_io_set_loggers(
+            log_impl_misc, log_impl_info, log_impl_warning, log_impl_fatal);
 
-    if (!eam_io_ok) {
-        goto fail;
+        eam_io_ok =
+            eam_io_init(avs_thread_create, avs_thread_join, avs_thread_destroy);
+
+        if (!eam_io_ok) {
+            goto fail;
+        }
     }
 
     /* ledunit init */
     ledunit_init(game_type);
 
+    log_info("Starting up led unit backend");
+
     /* game io init */
+    guitarunit_flag &=
+        (gdhook_cfg.disable_gf1_emu ? 0 :
+                                      GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT1) |
+        (gdhook_cfg.disable_gf2_emu ? 0 :
+                                      GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT2);
+
     if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
-        drumunit_init();
+        if (!gdhook_cfg.disable_dm_emu) {
+            drumunit_init();
+            log_info("Starting up drum unit backend");
+        }
     } else {
-        guitarunit_init(game_type & 0x03);
+        guitarunit_init(guitarunit_flag);
+        log_info("Starting up guitar unit backend, flag %02x", guitarunit_flag);
     }
 
     log_info("---  End  gdhook dll_entry_init ---");
@@ -244,14 +251,18 @@ static bool my_dll_entry_main(void)
     gd_io_fini();
 
     if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
-        drumunit_fini();
+        if (!gdhook_cfg.disable_dm_emu) {
+            drumunit_fini();
+        }
     } else {
         guitarunit_fini();
     }
 
     ledunit_fini();
 
-    cardunit_fini();
+    if (!gdhook_cfg.disable_eamio_emu) {
+        cardunit_fini();
+    }
 
     p4ioemu_fini();
 
@@ -260,9 +271,27 @@ static bool my_dll_entry_main(void)
 
 BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 {
+    struct cconfig *config;
+
     if (reason != DLL_PROCESS_ATTACH) {
         return TRUE;
     }
+
+    config = cconfig_init();
+
+    gdhook_config_init(config);
+
+    if (!cconfig_hook_config_init(
+            config,
+            GDHOOK_INFO_HEADER "\n" GDHOOK_CMD_USAGE,
+            CCONFIG_CMD_USAGE_OUT_DBG)) {
+        cconfig_finit(config);
+        exit(EXIT_FAILURE);
+    }
+
+    gdhook_config_get(&gdhook_cfg, config);
+
+    cconfig_finit(config);
 
     log_to_external(
         log_body_misc, log_body_info, log_body_warning, log_body_fatal);
@@ -270,11 +299,24 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
     app_hook_init(my_dll_entry_init, my_dll_entry_main);
 
     iohook_push_handler(p4ioemu_dispatch_irp);
-    iohook_push_handler(cardunit_dispatch_irp);
+
+    if (!gdhook_cfg.disable_eamio_emu) {
+        iohook_push_handler(cardunit_dispatch_irp);
+    }
+
     iohook_push_handler(ledunit_dispatch_irp);
-    iohook_push_handler(guitarunit1_dispatch_irp);
-    iohook_push_handler(guitarunit2_dispatch_irp);
-    iohook_push_handler(drumunit_dispatch_irp);
+
+    if (!gdhook_cfg.disable_gf1_emu) {
+        iohook_push_handler(guitarunit1_dispatch_irp);
+    }
+
+    if (!gdhook_cfg.disable_gf2_emu) {
+        iohook_push_handler(guitarunit2_dispatch_irp);
+    }
+
+    if (!gdhook_cfg.disable_dm_emu) {
+        iohook_push_handler(drumunit_dispatch_irp);
+    }
 
     adapter_hook_init();
     rs232_hook_init();

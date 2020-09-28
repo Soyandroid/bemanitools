@@ -43,12 +43,6 @@ static int drumunit_autoget_thread(void *);
 static struct acio_j32d_msg_hook drum_dispatcher = {.autoget_start =
                                                         drumunit_autoget_start};
 
-enum {
-    GDHOOK_DRUMUNIT_CABTYPE_XG = 0x00,
-    GDHOOK_DRUMUNIT_CABTYPE_SD = 0x01,
-    GDHOOK_DRUMUNIT_CABTYPE_GD = 0x02,
-};
-
 enum ac_io_j32d_cmd {
     AC_IO_CMD_J32D_IO_AUTOGET_START = 0x0120,
     AC_IO_CMD_J32D_IO_AUTOGET_DATA = 0x012F,
@@ -211,6 +205,9 @@ static int drumunit_autoget_thread(void *dummy_ctx)
             real guitar io runs at about 250 ticks per second @ baudrate 115200
             so adding the sleep from gd_io_read_dm_inputs will get us to ~2ms
             delay which is pretty close to 250 ticks per second
+
+            i don't have drum io unit lying around me, so like guitar io
+            i just set it to ~2ms too assuming it's also running at 250 ticks/s
         */
         Sleep(1);
 
@@ -227,7 +224,7 @@ static int drumunit_autoget_thread(void *dummy_ctx)
 
         /* process inputs */
         for (int pad_no = 0; pad_no < 7; pad_no++) {
-            /* add drum_inputs value */
+            /* add drum_inputs value to drum_pad */
             drum_pad[pad_no] |= drum_inputs & (1 << pad_no) ? 128 : 0;
         }
 

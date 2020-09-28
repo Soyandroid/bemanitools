@@ -419,6 +419,8 @@ STRINGTABLE
     IDS_IIDX_PANEL_S4             "Effector Slider 4"
     IDS_IIDX_PANEL_S5             "Effector Slider 5"
     IDS_GD_SCHEMA                 "GITADORA"
+    IDS_GD_GF_SCHEMA              "GITADORA GuitarFreaks"
+    IDS_GD_DM_SCHEMA              "GITADORA DrumMania"
     IDS_GD_BTN_P1_START           "P1 Start"
     IDS_GD_BTN_P1_HELP            "P1 Help"
     IDS_GD_BTN_P1_UP              "P1 Up"

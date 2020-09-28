@@ -8,7 +8,8 @@ EXPORTS
     gd_io_get_dm_panel_inputs
     gd_io_get_gf_guitar_inputs
     gd_io_get_gf_panel_inputs
-    gd_io_init
+    gd_io_dm_init
+    gd_io_gf_init
     gd_io_read_dm_inputs
     gd_io_read_gf_inputs
     gd_io_read_p4io_inputs

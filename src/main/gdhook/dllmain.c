@@ -20,7 +20,8 @@
 #include "imports/avs.h"
 
 #include "gdhook/cardunit.h"
-#include "gdhook/config.h"
+#include "gdhook/config-emu.h"
+#include "gdhook/config-game.h"
 #include "gdhook/drumunit.h"
 #include "gdhook/guitarunit.h"
 #include "gdhook/ledunit.h"
@@ -42,7 +43,8 @@
 
 static uint8_t game_type;
 
-static struct gdhook_config gdhook_cfg;
+static struct gdhook_config_emu gdhook_cfg_emu;
+static struct gdhook_config_game gdhook_cfg_game;
 
 static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 {
@@ -86,10 +88,10 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
             break;
     }
 
-    if (gdhook_cfg.is_windowed)
+    if (gdhook_cfg_game.is_windowed)
         strcat_s(gdhook_param_cmdline, 1024, "-WINDOW ");
 
-    strcat_s(gdhook_param_cmdline, 1024, gdhook_cfg.cmdline_app);
+    strcat_s(gdhook_param_cmdline, 1024, gdhook_cfg_game.cmdline_app);
     strcat_s(gdhook_param_cmdline, 1024, " ");
 
     cmdline = NULL;
@@ -129,7 +131,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 
     /* p4ioemu init */
     cabtype_override = 0;
-    switch (gdhook_cfg.cab_type) {
+    switch (gdhook_cfg_game.cab_type) {
         case GDHOOK_CONFIG_CABTYPE_XG:
             game_type |= GDHOOK_CONFIG_CABTYPE_XG;
         default:
@@ -175,7 +177,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 
     /* cardunit init */
 
-    if (!gdhook_cfg.disable_eamio_emu) {
+    if (!gdhook_cfg_emu.disable_eamio_emu) {
         cardunit_init(cardunit_count);
 
         log_info("Starting up card reader backend");
@@ -197,14 +199,15 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     log_info("Starting up led unit backend");
 
     /* game io init */
-    guitarunit_flag &=
-        (gdhook_cfg.disable_gf1_emu ? 0 :
-                                      GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT1) |
-        (gdhook_cfg.disable_gf2_emu ? 0 :
-                                      GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT2);
+    guitarunit_flag &= (gdhook_cfg_emu.disable_gf1_emu ?
+                            0 :
+                            GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT1) |
+        (gdhook_cfg_emu.disable_gf2_emu ?
+             0 :
+             GDHOOK_GUITARUNIT_ENABLE_GUITAR_UNIT2);
 
     if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
-        if (!gdhook_cfg.disable_dm_emu) {
+        if (!gdhook_cfg_emu.disable_dm_emu) {
             drumunit_init();
             log_info("Starting up drum unit backend");
         }
@@ -251,7 +254,7 @@ static bool my_dll_entry_main(void)
     gd_io_fini();
 
     if (game_type & GDHOOK_CONFIG_GAME_DRUM) {
-        if (!gdhook_cfg.disable_dm_emu) {
+        if (!gdhook_cfg_emu.disable_dm_emu) {
             drumunit_fini();
         }
     } else {
@@ -260,7 +263,7 @@ static bool my_dll_entry_main(void)
 
     ledunit_fini();
 
-    if (!gdhook_cfg.disable_eamio_emu) {
+    if (!gdhook_cfg_emu.disable_eamio_emu) {
         cardunit_fini();
     }
 
@@ -279,7 +282,8 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     config = cconfig_init();
 
-    gdhook_config_init(config);
+    gdhook_config_emu_init(config);
+    gdhook_config_game_init(config);
 
     if (!cconfig_hook_config_init(
             config,
@@ -289,7 +293,8 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
         exit(EXIT_FAILURE);
     }
 
-    gdhook_config_get(&gdhook_cfg, config);
+    gdhook_config_emu_get(&gdhook_cfg_emu, config);
+    gdhook_config_game_get(&gdhook_cfg_game, config);
 
     cconfig_finit(config);
 
@@ -300,21 +305,21 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     iohook_push_handler(p4ioemu_dispatch_irp);
 
-    if (!gdhook_cfg.disable_eamio_emu) {
+    if (!gdhook_cfg_emu.disable_eamio_emu) {
         iohook_push_handler(cardunit_dispatch_irp);
     }
 
     iohook_push_handler(ledunit_dispatch_irp);
 
-    if (!gdhook_cfg.disable_gf1_emu) {
+    if (!gdhook_cfg_emu.disable_gf1_emu) {
         iohook_push_handler(guitarunit1_dispatch_irp);
     }
 
-    if (!gdhook_cfg.disable_gf2_emu) {
+    if (!gdhook_cfg_emu.disable_gf2_emu) {
         iohook_push_handler(guitarunit2_dispatch_irp);
     }
 
-    if (!gdhook_cfg.disable_dm_emu) {
+    if (!gdhook_cfg_emu.disable_dm_emu) {
         iohook_push_handler(drumunit_dispatch_irp);
     }
 

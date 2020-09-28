@@ -24,4 +24,5 @@ src_gdhook        := \
     ledunit.c \
     guitarunit.c \
     drumunit.c \
-    config.c
+    config-emu.c \
+    config-game.c

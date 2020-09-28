@@ -11,4 +11,4 @@ if not exist dev\jb\nvram\ea3-config.xml copy prop\eamuse-config.xml dev\jb\nvra
 if not exist dev\jb\raw mkdir dev\jb\raw
 if not exist dev\tmp mkdir dev\tmp
 
-launcher -K -V prop/avs-config.xml -E prop/ea3-config.xml gdhook.dll gdxg.dll --config gdhook.conf %*
+launcher -K gdhook.dll -V prop/avs-config.xml -E prop/ea3-config.xml gdxg.dll --config gdhook.conf %*

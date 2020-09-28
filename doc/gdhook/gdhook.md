@@ -18,24 +18,18 @@ folder with your unpacked data looks like this:
 
 * Copy/Move all files from the *modules* directory to the root folder, so they
 are located next to the *data* and *prop* folders.
-* Create a new file *app-config.xml* in the *prop* folder with the following
-content:
-```
-<?xml version="1.0"?>
-<param></param>
-```
 * Copy *avs-config-jb.xml* to *avs-config.xml* and *avs-config-ja.xml* to
 *avs-config2.xml* in *prop* folder.
 * Copy *eamuse-config.xml* to *ea3-config.xml* and *eamuse-config2.xml* to
 *ea3-config2.xml* in *prop* folder.
 * Setup proper paths for *dev/nvram* and *dev/raw* in *prop/avs-config.xml* 
-and *prop/avs-config2.xml* by replacing the *<fs>*-block in that file
+and *prop/avs-config2.xml* by replacing the *fs*-block in that file
 with the following block, where "XX" should be "ja" for *avs-config2.xml*
 or "jb" for *avs-config.xml*:
 ```
   <fs>
     <root>
-      <device __type="str">..\contents</device>
+      <device __type="str">.</device>
     </root>
     <nvram>
       <device __type="str">dev/XX/nvram</device>
@@ -50,7 +44,7 @@ or "jb" for *avs-config.xml*:
     <nr_filedesc __type="u16">128</nr_filedesc>
   </fs>
 ```
-* Add proper *<id>* and *<soft>* block as below in *prop/ea3-config.xml* 
+* Add proper */ea3/id* and */ea3/soft* block as below in *prop/ea3-config.xml* 
 and *prop/ea3-config2.xml* if they're not exists, change */ea3/soft/spec*
 to "A" for *ea3-config2.xml* or "B" for *ea3-config.xml*:
 ```

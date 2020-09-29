@@ -89,7 +89,7 @@ static uint32_t p4ioemu_p4io_command_handle(
 
             memset(resp, 0, sizeof(struct p4io_device_info_resp));
 
-            info->type = 0x37133713;
+            info->type = 0x0000000B;
             info->flag = 1;
             info->version_major = 1;
             info->version_minor = 1;

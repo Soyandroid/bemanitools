@@ -22,6 +22,8 @@
 #include "gdhook/cardunit.h"
 #include "gdhook/config-emu.h"
 #include "gdhook/config-game.h"
+#include "gdhook/config-gfx.h"
+#include "gdhook/d3d9.h"
 #include "gdhook/drumunit.h"
 #include "gdhook/guitarunit.h"
 #include "gdhook/ledunit.h"
@@ -45,6 +47,7 @@ static uint8_t game_type;
 
 static struct gdhook_config_emu gdhook_cfg_emu;
 static struct gdhook_config_game gdhook_cfg_game;
+static struct gdhook_config_gfx gdhook_cfg_gfx;
 
 static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 {
@@ -284,6 +287,7 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     gdhook_config_emu_init(config);
     gdhook_config_game_init(config);
+    gdhook_config_gfx_init(config);
 
     if (!cconfig_hook_config_init(
             config,
@@ -295,8 +299,11 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     gdhook_config_emu_get(&gdhook_cfg_emu, config);
     gdhook_config_game_get(&gdhook_cfg_game, config);
+    gdhook_config_gfx_get(&gdhook_cfg_gfx, config);
 
     cconfig_finit(config);
+
+    gdhook_cfg_gfx.windowed = gdhook_cfg_game.is_windowed;
 
     log_to_external(
         log_body_misc, log_body_info, log_body_warning, log_body_fatal);
@@ -325,6 +332,9 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     adapter_hook_init();
     rs232_hook_init();
+
+    d3d9_configure(&gdhook_cfg_gfx);
+    d3d9_hook_init();
 
     hook_setupapi_init(&p4ioemu_setupapi_data);
 

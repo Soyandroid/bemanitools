@@ -25,5 +25,7 @@ src_gdhook        := \
     lednode.c \
     guitarunit.c \
     drumunit.c \
+    d3d9.c \
+    config-gfx.c \
     config-emu.c \
     config-game.c

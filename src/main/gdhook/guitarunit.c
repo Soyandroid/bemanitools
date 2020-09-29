@@ -32,7 +32,7 @@
 #define GDHOOK_GDIO_TO_ACIO11BITS(x) (((x >> 3) & 0xFF) | ((x & 3) << 10))
 
 static struct ac_io_emu ac_io_emu[2];
-static struct ac_io_emu_j33i ac_io_emu_j33i[2];
+static struct ac_io_emu_j33i ac_io_emu_guitar[2];
 static uint8_t ac_io_guitarunit_flag;
 static int guitar_unit_thread_id[2];
 
@@ -68,7 +68,7 @@ static void guitarunit_init_unit_no(uint8_t unit_no)
     ac_io_emu_init(&ac_io_emu[unit_no], unit_no == 0 ? L"COM2" : L"COM3");
 
     ac_io_emu_j33i_init(
-        &ac_io_emu_j33i[unit_no],
+        &ac_io_emu_guitar[unit_no],
         &ac_io_emu[unit_no],
         unit_no == 0 ? &guitar_p1_dispatcher : &guitar_p2_dispatcher);
 
@@ -137,7 +137,7 @@ static HRESULT guitarunit_dispatch_irp(struct irp *irp, uint8_t unit_no)
                 break;
 
             case 1:
-                ac_io_emu_j33i_dispatch_request(&ac_io_emu_j33i[unit_no], msg);
+                ac_io_emu_j33i_dispatch_request(&ac_io_emu_guitar[unit_no], msg);
 
                 break;
 
@@ -331,7 +331,7 @@ static int guitarunit_autoget_thread(uint8_t unit_no)
         memcpy(resp.cmd.raw, autoget_buffer, sizeof(autoget_buffer));
 
         ac_io_emu_response_push(
-            (&ac_io_emu_j33i[autoget_unit_no])->emu, &resp, 0);
+            (&ac_io_emu_guitar[autoget_unit_no])->emu, &resp, 0);
     }
     return 0;
 }

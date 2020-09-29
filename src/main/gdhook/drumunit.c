@@ -32,7 +32,7 @@
 #define GDHOOK_DMIO_TO_ACIO10BITS(x) (((x >> 6) & 0x000F) | ((x & 0x3F) << 10))
 
 static struct ac_io_emu ac_io_emu;
-static struct ac_io_emu_j32d ac_io_emu_j32d;
+static struct ac_io_emu_j32d ac_io_emu_drum;
 static uint8_t ac_io_drumunit_cnt;
 static int drum_unit_thread_id;
 
@@ -55,7 +55,7 @@ void drumunit_init(void)
 
     ac_io_emu_init(&ac_io_emu, L"COM2");
 
-    ac_io_emu_j32d_init(&ac_io_emu_j32d, &ac_io_emu, &drum_dispatcher);
+    ac_io_emu_j32d_init(&ac_io_emu_drum, &ac_io_emu, &drum_dispatcher);
 
     ac_io_drumunit_cnt++;
 
@@ -101,7 +101,7 @@ HRESULT drumunit_dispatch_irp(struct irp *irp)
                 break;
 
             case 1:
-                ac_io_emu_j32d_dispatch_request(&ac_io_emu_j32d, msg);
+                ac_io_emu_j32d_dispatch_request(&ac_io_emu_drum, msg);
 
                 break;
 
@@ -257,7 +257,7 @@ static int drumunit_autoget_thread(void *dummy_ctx)
         resp.cmd.nbytes = sizeof(autoget_buffer);
         memcpy(resp.cmd.raw, autoget_buffer, sizeof(autoget_buffer));
 
-        ac_io_emu_response_push((&ac_io_emu_j32d)->emu, &resp, 0);
+        ac_io_emu_response_push((&ac_io_emu_drum)->emu, &resp, 0);
     }
     return 0;
 }

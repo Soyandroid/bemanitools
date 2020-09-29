@@ -22,6 +22,7 @@ src_gdhook        := \
     dllmain.c \
     p4io.c \
     ledunit.c \
+    lednode.c \
     guitarunit.c \
     drumunit.c \
     config-emu.c \

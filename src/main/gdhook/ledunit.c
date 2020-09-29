@@ -13,12 +13,12 @@
 
 #include "acioemu/addr.h"
 #include "acioemu/emu.h"
-#include "acioemu/h32b.h"
 
 #include "bemanitools/gdio.h"
 
 #include "hook/iohook.h"
 
+#include "gdhook/lednode.h"
 #include "gdhook/ledunit.h"
 
 #include "imports/avs.h"
@@ -30,7 +30,7 @@
 #include "util/str.h"
 
 static struct ac_io_emu ac_io_emu;
-static struct ac_io_emu_h32b ac_io_emu_h32b[3];
+static struct ac_io_emu_lednode ac_io_emu_led[3];
 static uint8_t ac_io_ledunit_cnt;
 
 enum {
@@ -43,7 +43,7 @@ enum {
 };
 
 static void lights_dispatcher_gf_main(
-    struct ac_io_emu_h32b *emu, const struct ac_io_message *req)
+    struct ac_io_emu_lednode *emu, const struct ac_io_message *req)
 {
     uint8_t *output = (uint8_t *) &req->cmd.raw;
 
@@ -70,7 +70,7 @@ static void lights_dispatcher_gf_main(
 }
 
 static void lights_dispatcher_gf_speakers(
-    struct ac_io_emu_h32b *emu,
+    struct ac_io_emu_lednode *emu,
     const struct ac_io_message *req,
     bool is_right_speaker)
 {
@@ -121,19 +121,19 @@ static void lights_dispatcher_gf_speakers(
 }
 
 static void lights_dispatcher_gf_left_speaker(
-    struct ac_io_emu_h32b *emu, const struct ac_io_message *req)
+    struct ac_io_emu_lednode *emu, const struct ac_io_message *req)
 {
     lights_dispatcher_gf_speakers(emu, req, false);
 }
 
 static void lights_dispatcher_gf_right_speaker(
-    struct ac_io_emu_h32b *emu, const struct ac_io_message *req)
+    struct ac_io_emu_lednode *emu, const struct ac_io_message *req)
 {
     lights_dispatcher_gf_speakers(emu, req, true);
 }
 
 static void lights_dispatcher_dm_main(
-    struct ac_io_emu_h32b *emu, const struct ac_io_message *req)
+    struct ac_io_emu_lednode *emu, const struct ac_io_message *req)
 {
     uint8_t *output = (uint8_t *) &req->cmd.raw;
 
@@ -168,25 +168,25 @@ void ledunit_init(uint8_t ledunit_type)
             break;
 
         case GDHOOK_LEDUNIT_GAME_GUITAR_XG:
-            ac_io_emu_h32b_init(
-                &ac_io_emu_h32b[1],
+            ac_io_emu_lednode_init(
+                &ac_io_emu_led[1],
                 &ac_io_emu,
                 lights_dispatcher_gf_left_speaker);
-            ac_io_emu_h32b_init(
-                &ac_io_emu_h32b[2],
+            ac_io_emu_lednode_init(
+                &ac_io_emu_led[2],
                 &ac_io_emu,
                 lights_dispatcher_gf_right_speaker);
             ac_io_ledunit_cnt = 2;
         case GDHOOK_LEDUNIT_GAME_GUITAR_SD:
-            ac_io_emu_h32b_init(
-                &ac_io_emu_h32b[0], &ac_io_emu, lights_dispatcher_gf_main);
+            ac_io_emu_lednode_init(
+                &ac_io_emu_led[0], &ac_io_emu, lights_dispatcher_gf_main);
             ac_io_ledunit_cnt++;
             break;
 
         case GDHOOK_LEDUNIT_GAME_DRUM_XG:
         case GDHOOK_LEDUNIT_GAME_DRUM_SD:
-            ac_io_emu_h32b_init(
-                &ac_io_emu_h32b[0], &ac_io_emu, lights_dispatcher_dm_main);
+            ac_io_emu_lednode_init(
+                &ac_io_emu_led[0], &ac_io_emu, lights_dispatcher_dm_main);
             ac_io_ledunit_cnt++;
             break;
     }
@@ -225,17 +225,17 @@ ledunit_dispatch_irp(struct irp *irp)
                 break;
 
             case 1:
-                ac_io_emu_h32b_dispatch_request(&ac_io_emu_h32b[0], msg);
+                ac_io_emu_lednode_dispatch_request(&ac_io_emu_led[0], msg);
 
                 break;
 
             case 2:
-                ac_io_emu_h32b_dispatch_request(&ac_io_emu_h32b[1], msg);
+                ac_io_emu_lednode_dispatch_request(&ac_io_emu_led[1], msg);
 
                 break;
 
             case 3:
-                ac_io_emu_h32b_dispatch_request(&ac_io_emu_h32b[2], msg);
+                ac_io_emu_lednode_dispatch_request(&ac_io_emu_led[2], msg);
 
                 break;
 

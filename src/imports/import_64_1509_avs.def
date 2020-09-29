@@ -22,7 +22,7 @@ EXPORTS
     property_destroy @128 NONAME
     property_insert_read @131 NONAME
     property_node_create @145 NONAME
-	property_node_datasize @153 NONAME
+    property_node_datasize @153 NONAME
     property_node_get_desc @157 NONAME
     property_node_refer @158 NONAME
     property_node_remove @146 NONAME

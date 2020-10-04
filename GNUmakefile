@@ -102,13 +102,14 @@ libs		:=
 
 avsdlls		:=
 avsexes		:=
+avslibs     :=
 
 testdlls    :=
 testexes    :=
 
 include Module.mk
 
-modules		:= $(dlls) $(exes) $(libs) $(avsdlls) $(avsexes) $(testdlls) $(testexes)
+modules		:= $(dlls) $(exes) $(libs) $(avsdlls) $(avsexes) $(avslibs) $(testdlls) $(testexes)
 
 #
 # $1: Bitness
@@ -163,6 +164,7 @@ $$(bindir_$1_$2):
 $$(eval $$(foreach imp,$(imps),$$(call t_import,$1,$2,$$(imp))))
 $$(eval $$(foreach dll,$(avsdlls),$$(call t_linkdll,$1,$2,$$(dll))))
 $$(eval $$(foreach exe,$(avsexes),$$(call t_linkexe,$1,$2,$$(exe))))
+$$(eval $$(foreach lib,$(avslibs),$$(call t_archive,$1,$2,$$(lib))))
 
 endef
 
@@ -226,7 +228,7 @@ $$(dll_$1_$2_$3) $$(implib_$1_$2_$3):	$$(obj_$1_$2_$3) $$(abslib_$1_$2_$3) \
 	$(V)echo ... $$(dll_$1_$2_$3)
 	$(V)$$(toolchain_$1)gcc -shared \
 		-o $$(dll_$1_$2_$3) -Wl,--out-implib,$$(implib_$1_$2_$3) \
-		$$^ $$(ldflags_$3)
+		-Wl,--start-group $$^ -Wl,--end-group $$(ldflags_$3)
 	$(V)$$(toolchain_$1)strip $$(dll_$1_$2_$3)
 	$(V)$$(toolchain_$1)ranlib $$(implib_$1_$2_$3)
 

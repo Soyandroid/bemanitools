@@ -2,13 +2,13 @@ avsdlls += jbhook
 
 deplibs_jbhook    := \
     avs \
+    jbhook-util \
 
 ldflags_jbhook   := \
     -lws2_32 \
     -liphlpapi \
 
 libs_jbhook       := \
-    jbhook-util \
     acioemu \
     eamio \
     jbio \

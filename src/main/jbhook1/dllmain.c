@@ -16,13 +16,14 @@
 #include "hooklib/adapter.h"
 #include "hooklib/rs232.h"
 
-#include "jbhook1/acio.h"
 #include "jbhook1/avs-boot.h"
 #include "jbhook1/config-eamuse.h"
 #include "jbhook1/config-gfx.h"
 #include "jbhook1/config-security.h"
 #include "jbhook1/log-gftools.h"
-#include "jbhook1/p3io.h"
+
+#include "jbhook-util/acio.h"
+#include "jbhook-util/p3io.h"
 
 #include "p3ioemu/devmgr.h"
 #include "p3ioemu/emu.h"
@@ -120,10 +121,10 @@ static HWND CDECL my_mwindow_create(
     }
 
     iohook_push_handler(p3io_emu_dispatch_irp);
-    iohook_push_handler(ac_io_port_dispatch_irp);
+    iohook_push_handler(jbhook_util_ac_io_port_dispatch_irp);
 
     rs232_hook_init();
-    ac_io_port_init(L"COM1");
+    jbhook_util_ac_io_port_init(L"COM1");
 
     p3io_setupapi_insert_hooks(NULL);
     jbhook_util_p3io_init(

@@ -2,6 +2,7 @@ avsdlls += jbhook1
 
 deplibs_jbhook1	:= \
 	avs \
+	jbhook-util \
 
 ldflags_jbhook1   := \
     -lws2_32 \
@@ -20,11 +21,9 @@ libs_jbhook1       := \
     util \
 
 src_jbhook1        := \
-    acio.c \
     avs-boot.c \
     config-gfx.c \
     config-eamuse.c \
     config-security.c \
     dllmain.c \
     log-gftools.c \
-    p3io.c \

@@ -126,8 +126,9 @@ void ac_io_emu_icca_dispatch_request(
 
             break;
 
+        case AC_IO_ICCA_CMD_UNKN_0116:
         case AC_IO_ICCA_CMD_UNKN_0120:
-            log_misc("AC_IO_ICCA_CMD_UNKN_0120(%d)", req->addr);
+            log_misc("AC_IO_ICCB_CMD_UNK_%04X(%d)", cmd_code, req->addr);
             ac_io_emu_icca_send_status(icca, req, 0x00);
 
             break;
@@ -145,6 +146,10 @@ void ac_io_emu_icca_dispatch_request(
             break;
 
         case AC_IO_ICCA_CMD_SET_SLOT_STATE: {
+            if(icca->version == v150) {
+                ac_io_emu_icca_send_state(icca, req, 0, false);
+                break;
+            }
             struct ac_io_icca_misc *misc =
                 (struct ac_io_icca_misc *) &req->cmd.raw;
             uint8_t cmd;
@@ -209,13 +214,16 @@ void ac_io_emu_icca_dispatch_request(
             break;
 
         case AC_IO_ICCA_CMD_POLL_FELICA:
-            icca->detected_new_reader = true;
-
-            if (icca->version == v170) {
+            if (icca->version == v150) {
+                ac_io_emu_icca_send_state(icca, req, 0, false);
+                break;
+            } else if (icca->version == v170) {
                 ac_io_emu_icca_send_empty(icca, req);
             } else {
                 ac_io_emu_icca_send_status(icca, req, 0x01);
             }
+
+            icca->detected_new_reader = true;
 
             break;
 
@@ -251,8 +259,6 @@ static void ac_io_emu_icca_cmd_send_version(
     resp.cmd.version.major = 0x01;
 
     if (icca->version == v150) {
-        log_warning(
-            "ICCA v1.5.0 emulation requested, please remove this log once implemented");
         resp.cmd.version.minor = 0x05;
     } else if (icca->version == v160) {
         resp.cmd.version.minor = 0x06;
@@ -269,7 +275,7 @@ static void ac_io_emu_icca_cmd_send_version(
 
     memcpy(
         resp.cmd.version.product_code,
-        "ICCA",
+        icca->version == v150 ? "ICCB" : "ICCA",
         sizeof(resp.cmd.version.product_code));
     strncpy(resp.cmd.version.date, __DATE__, sizeof(resp.cmd.version.date));
     strncpy(resp.cmd.version.time, __TIME__, sizeof(resp.cmd.version.time));

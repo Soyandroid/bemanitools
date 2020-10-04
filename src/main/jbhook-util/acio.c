@@ -19,6 +19,7 @@
 #include "hook/iohook.h"
 
 #include "jbhook-util/acio.h"
+#include "jbhook-util/jbhook-util.h"
 
 #include "imports/avs.h"
 
@@ -38,7 +39,9 @@ void jbhook_util_ac_io_port_init(const wchar_t *filename)
     ac_io_emu_icca_init(&ac_io_emu_icca, &ac_io_emu, 0);
     ac_io_emu_h44b_init(&ac_io_emu_h44b, &ac_io_emu, 1);
 
+#if JB_IS_P4IO
     ac_io_emu_icca_set_version(&ac_io_emu_icca, v150);
+#endif
 }
 
 void jbhook_util_ac_io_port_fini(void)

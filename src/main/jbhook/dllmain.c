@@ -25,6 +25,7 @@
 #include "jbhook-util/acio.h"
 #include "jbhook-util/p3io.h"
 #include "jbhook-util/security.h"
+#include "jbhook-util/jbhook-util.h"
 
 #include "p3ioemu/devmgr.h"
 #include "p3ioemu/emu.h"
@@ -37,8 +38,6 @@
 #include "util/defs.h"
 #include "util/log.h"
 #include "util/thread.h"
-
-#define JB_IS_P4IO (AVS_VERSION >= 1500)
 
 static struct options options;
 

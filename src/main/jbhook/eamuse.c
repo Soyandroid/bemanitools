@@ -28,12 +28,21 @@ static int STDCALL my_getaddrinfo(
     const ADDRINFOA *pHints,
     PADDRINFOA *ppResult);
 
+static bool STDCALL network_addr_is_changed(void);
+
 static const struct hook_symbol eamuse_hook_syms[] = {
     {
         .name = "getaddrinfo",
         .ordinal = 176,
         .patch = my_getaddrinfo,
         .link = (void **) &real_getaddrinfo,
+    },
+};
+
+static const struct hook_symbol network_hook_syms[] = {
+    {
+        .name = "network_addr_is_changed",
+        .patch = network_addr_is_changed,
     },
 };
 
@@ -58,10 +67,17 @@ static int STDCALL my_getaddrinfo(
     return real_getaddrinfo(pNodeName, pServiceName, pHints, ppResult);
 }
 
+static bool STDCALL network_addr_is_changed(void) {
+    // fix IP errors ingame for older jubeats
+    return 0;
+}
+
 void jbhook_eamuse_hook_init(void)
 {
     hook_table_apply(
         NULL, "ws2_32.dll", eamuse_hook_syms, lengthof(eamuse_hook_syms));
+    hook_table_apply(
+        NULL, "network.dll", network_hook_syms, lengthof(network_hook_syms));
 
     log_info("Inserted eamuse hooks");
 }

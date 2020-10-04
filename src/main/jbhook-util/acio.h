@@ -4,19 +4,19 @@
 #include "hook/iohook.h"
 
 /**
- * Initialize the ACIO backend for jubeat.
+ * Initialize the ACIO backend for jubeat on the specified COM port.
  */
-void ac_io_port_init(void);
+void jbhook_util_ac_io_port_init(const wchar_t *filename);
 
 /**
  * Shutdown the ACIO backend.
  */
-void ac_io_port_fini(void);
+void jbhook_util_ac_io_port_fini(void);
 
 /**
  * ACIO backend dispatch irp function. This needs to be hooked up to the iohook
  * module in order to receive system calls to dispatch for emulation.
  */
-HRESULT ac_io_port_dispatch_irp(struct irp *irp);
+HRESULT jbhook_util_ac_io_port_dispatch_irp(struct irp *irp);
 
 #endif

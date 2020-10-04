@@ -5,7 +5,9 @@
 
 #include "bemanitools/jbio.h"
 
-#include "jbhook1/p3io.h"
+#include "imports/avs.h"
+
+#include "jbhook-util/p3io.h"
 
 #include "p3ioemu/emu.h"
 #include "p3ioemu/uart.h"
@@ -15,8 +17,8 @@
 
 #include "util/log.h"
 
-static HRESULT jbhook1_p3io_read_jamma(void *ctx, uint32_t *state);
-static HRESULT jbhook1_p3io_get_roundplug(
+static HRESULT jbhook_p3io_read_jamma(void *ctx, uint32_t *state);
+static HRESULT jbhook_p3io_get_roundplug(
     void *ctx, uint8_t plug_id, uint8_t *rom, uint8_t *eeprom);
 
 /*
@@ -56,7 +58,7 @@ static HRESULT jbhook1_p3io_get_roundplug(
     3:6 -
     3:7 -
 */
-static const uint32_t jbhook1_p3io_panel_mappings[] = {
+static const uint32_t jbhook_p3io_panel_mappings[] = {
     (1 << 21),
     (1 << 17),
     (1 << 13),
@@ -75,46 +77,50 @@ static const uint32_t jbhook1_p3io_panel_mappings[] = {
     (1 << 12),
 };
 
-static const uint32_t jbhook1_p3io_sys_button_mappings[] = {
+static const uint32_t jbhook_p3io_sys_button_mappings[] = {
     (1 << 4),
     (1 << 6),
     (1 << 5),
 };
 
-static struct security_mcode jbhook1_p3io_mcode;
-static struct security_id jbhook1_p3io_pcbid;
-static struct security_id jbhook1_p3io_eamid;
+static struct security_mcode jbhook_p3io_mcode;
+static struct security_id jbhook_p3io_pcbid;
+static struct security_id jbhook_p3io_eamid;
+static char* sidcode;
 
 static const struct p3io_ops p3io_ddr_ops = {
-    .read_jamma = jbhook1_p3io_read_jamma,
-    .get_roundplug = jbhook1_p3io_get_roundplug,
+    .read_jamma = jbhook_p3io_read_jamma,
+    .get_roundplug = jbhook_p3io_get_roundplug,
 };
 
-void jbhook1_p3io_init(
+void jbhook_util_p3io_init(
     const struct security_mcode *mcode,
     const struct security_id *pcbid,
     const struct security_id *eamid)
 {
-    memcpy(&jbhook1_p3io_mcode, mcode, sizeof(struct security_mcode));
-    memcpy(&jbhook1_p3io_pcbid, pcbid, sizeof(struct security_id));
-    memcpy(&jbhook1_p3io_eamid, eamid, sizeof(struct security_id));
+    memcpy(&jbhook_p3io_mcode, mcode, sizeof(struct security_mcode));
+    memcpy(&jbhook_p3io_pcbid, pcbid, sizeof(struct security_id));
+    memcpy(&jbhook_p3io_eamid, eamid, sizeof(struct security_id));
 
     p3io_emu_init(&p3io_ddr_ops, NULL);
 }
 
-void jbhook1_p3io_finit(void)
+void jbhook_util_p3io_set_sidcode(char *_sidcode) {
+    sidcode = _sidcode;
+}
+
+void jbhook_util_p3io_fini(void)
 {
     p3io_emu_fini();
 }
 
-static HRESULT jbhook1_p3io_read_jamma(void *ctx, uint32_t *state)
+static HRESULT jbhook_p3io_read_jamma(void *ctx, uint32_t *state)
 {
     uint16_t panels;
     uint8_t buttons;
 
     log_assert(state != NULL);
 
-    /* lower three bytes low active, highest byte high active */
     *state = 0;
 
     if (!jb_io_read_inputs()) {
@@ -126,42 +132,63 @@ static HRESULT jbhook1_p3io_read_jamma(void *ctx, uint32_t *state)
     buttons = jb_io_get_sys_inputs();
 
     for (uint8_t i = 0; i < 16; i++) {
-        if (panels & (1 << i)) {
-            *state |= jbhook1_p3io_panel_mappings[i];
+        // panels are active-low
+        if ((panels & (1 << i)) == 0) {
+            *state |= jbhook_p3io_panel_mappings[i];
         }
     }
 
     for (uint8_t i = 0; i < 2; i++) {
+        // sys buttons are active-high
         if (buttons & (1 << i)) {
-            *state |= jbhook1_p3io_sys_button_mappings[i];
+            *state |= jbhook_p3io_sys_button_mappings[i];
         }
     }
 
     return S_OK;
 }
 
-static HRESULT jbhook1_p3io_get_roundplug(
+static HRESULT jbhook_p3io_get_roundplug(
     void *ctx, uint8_t plug_id, uint8_t *rom, uint8_t *eeprom)
 {
     struct security_rp3_eeprom eeprom_out;
 
     if (plug_id == 0) {
         /* black */
-        memcpy(rom, jbhook1_p3io_pcbid.id, sizeof(jbhook1_p3io_pcbid.id));
+        struct security_mcode mcode = jbhook_p3io_mcode;
+
+        // load the sidcode the game actually expects just-in-time
+        char env_sidcode[255];
+        if(sidcode) {
+            memcpy(mcode.game, sidcode, sizeof(mcode.game));
+            // format: J44JAA
+            mcode.region = sidcode[3];
+            mcode.cabinet = sidcode[4];
+            mcode.revision = sidcode[5];
+        } else if(std_getenv("/env/profile/soft_id_code", env_sidcode, sizeof(env_sidcode))) {
+            // sec code is also checked during gameplay
+            memcpy(mcode.game, env_sidcode, sizeof(mcode.game));
+            // format: J44:J:A:A
+            mcode.region = env_sidcode[4];
+            mcode.cabinet = env_sidcode[6];
+            mcode.revision = env_sidcode[8];
+        }
+
+        memcpy(rom, jbhook_p3io_pcbid.id, sizeof(jbhook_p3io_pcbid.id));
         security_rp3_generate_signed_eeprom_data(
             SECURITY_RP_UTIL_RP_TYPE_BLACK,
             &security_rp_sign_key_black_gfdmv4,
-            &jbhook1_p3io_mcode,
-            &jbhook1_p3io_pcbid,
+            &mcode,
+            &jbhook_p3io_pcbid,
             &eeprom_out);
     } else {
         /* white */
-        memcpy(rom, jbhook1_p3io_eamid.id, sizeof(jbhook1_p3io_eamid.id));
+        memcpy(rom, jbhook_p3io_eamid.id, sizeof(jbhook_p3io_eamid.id));
         security_rp3_generate_signed_eeprom_data(
             SECURITY_RP_UTIL_RP_TYPE_WHITE,
             &security_rp_sign_key_white_eamuse,
             &security_mcode_eamuse,
-            &jbhook1_p3io_eamid,
+            &jbhook_p3io_eamid,
             &eeprom_out);
     }
 

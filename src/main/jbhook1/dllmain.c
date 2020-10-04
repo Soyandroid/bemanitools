@@ -123,10 +123,10 @@ static HWND CDECL my_mwindow_create(
     iohook_push_handler(ac_io_port_dispatch_irp);
 
     rs232_hook_init();
-    ac_io_port_init();
+    ac_io_port_init(L"COM1");
 
     p3io_setupapi_insert_hooks(NULL);
-    jbhook1_p3io_init(
+    jbhook_util_p3io_init(
         &config_security.mcode, &config_eamuse.pcbid, &config_eamuse.eamid);
 
     log_info("-------------------------------------------------------------");

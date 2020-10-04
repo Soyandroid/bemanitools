@@ -1,9 +1,16 @@
 # Game list
 
-The following games are compatible with this version of jbhook:
-* saucer
-* prop
-* qubell
+The following games are compatible with this version of jbhook. Please use the
+appropriate zip for your game version:
+* 01 - jubeat
+* 02 - ripples
+* 03 - knit
+* 04 - copious
+* 05 - saucer
+* 06 - prop
+* 07 - qubell
+* 08 - clan
+* 09 - festo
 
 # Data setup and running the game
 

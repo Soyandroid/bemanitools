@@ -130,6 +130,7 @@ include src/main/iidxiotest/Module.mk
 include src/main/inject/Module.mk
 include src/main/jbio/Module.mk
 include src/main/jbiotest/Module.mk
+include src/main/jbhook-util/Module.mk
 include src/main/jbhook/Module.mk
 include src/main/jbhook1/Module.mk
 include src/main/launcher/Module.mk
@@ -377,6 +378,32 @@ $(zipdir)/jb-01.zip: \
 		dist/jb/config.bat \
 		dist/jb/gamestart-01.bat \
 		dist/jb/jbhook-01.conf \
+		| $(zipdir)/
+	$(V)echo ... $@
+	$(V)zip -j $@ $^
+
+$(zipdir)/jb-03.zip: \
+		build/bin/avs2_1101-32/jbhook.dll \
+		build/bin/avs2_1101-32/launcher.exe \
+		build/bin/indep-32/config.exe \
+		build/bin/indep-32/eamio.dll \
+		build/bin/indep-32/geninput.dll \
+		build/bin/indep-32/jbio.dll \
+		dist/jb/config.bat \
+		dist/jb/gamestart.bat \
+		| $(zipdir)/
+	$(V)echo ... $@
+	$(V)zip -j $@ $^
+
+$(zipdir)/jb-04.zip: \
+		build/bin/avs2_1304-32/jbhook.dll \
+		build/bin/avs2_1304-32/launcher.exe \
+		build/bin/indep-32/config.exe \
+		build/bin/indep-32/eamio.dll \
+		build/bin/indep-32/geninput.dll \
+		build/bin/indep-32/jbio.dll \
+		dist/jb/config.bat \
+		dist/jb/gamestart.bat \
 		| $(zipdir)/
 	$(V)echo ... $@
 	$(V)zip -j $@ $^

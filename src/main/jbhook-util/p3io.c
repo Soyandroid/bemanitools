@@ -158,14 +158,15 @@ static HRESULT jbhook_p3io_get_roundplug(
         struct security_mcode mcode = jbhook_p3io_mcode;
 
         // load the sidcode the game actually expects just-in-time
-        char env_sidcode[255];
+        char env_sidcode[255] = {0};
         if(sidcode) {
             memcpy(mcode.game, sidcode, sizeof(mcode.game));
             // format: J44JAA
             mcode.region = sidcode[3];
             mcode.cabinet = sidcode[4];
             mcode.revision = sidcode[5];
-        } else if(std_getenv("/env/profile/soft_id_code", env_sidcode, sizeof(env_sidcode))) {
+        } else if(std_getenv("/env/profile/soft_id_code", env_sidcode, sizeof(env_sidcode))
+                && strlen(env_sidcode) > 0) {
             // sec code is also checked during gameplay
             memcpy(mcode.game, env_sidcode, sizeof(mcode.game));
             // format: J44:J:A:A

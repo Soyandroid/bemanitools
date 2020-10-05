@@ -155,8 +155,6 @@ my_GetBuffer(IAudioRenderClient *This, UINT32 NumFramesRequested, BYTE **ppData)
         if (sound_readjust_flag & GDHOOK_WASAPI_READJUST_MODREADJUST_VAL) {
             /*
                setting re-adjust size for GetBuffer and ReleaseBuffer here
-               the first GetCurrentPadding after Start() should be good enough
-               for timing
             */
             IAudioClient_GetCurrentPadding(pAudioClient, &numFramesPadding);
             adjust_frames = bufferFrameCount - numFramesPadding;
@@ -241,12 +239,16 @@ my_GetBufferSize(IAudioClient *This, UINT32 *pNumBufferFrames)
 
     if (sound_readjust_flag & GDHOOK_WASAPI_READJUST_ACQUIREREADBUFFER_PTR) {
         /*
-            get the pointer of sound buffer (per frame?)
-            notice that if the game parse the value of this pointer to another
-           variable it just won't work since we can't adjust the read buffer
-           (from audio source) by re-adjusting the value of this ptr
+           get the pointer of sound buffer size (per frame?)
 
-            but it works for GITADORA
+           in exclusive mode the game will get this value right after SetEventHandle
+           as fixed buffer size for feeding audio source data into render client
+
+           notice that if the game parse the value from this pointer to another
+           variable it just won't work since we can't adjust the audio source
+           read size by re-adjusting the value of this ptr
+
+           but it works for GITADORA
         */
         p_sound_source_read_size = pNumBufferFrames;
         sound_readjust_flag &= ~GDHOOK_WASAPI_READJUST_ACQUIREREADBUFFER_PTR;
@@ -268,12 +270,12 @@ static HRESULT WINAPI my_IsFormatSupported(
 
     /*
        force it checking for the shared mode of this format
+
        don't want to do something like 48000Hz 16bits to 44100Hz 32bit
        which is wayyyyyy more than this thing want to achieve
 
-       in SDVX all 3 formats are not supported
-       didn't check why that happened yet, since all of the format actually
-       looks fine to me
+       in SDVX all 3 formats are not supported, didn't check why that happened
+       yet, since all of the format actually looks fine to me
     */
     ShareMode = AUDCLNT_SHAREMODE_SHARED;
 
@@ -293,8 +295,12 @@ static HRESULT WINAPI my_Start(IAudioClient *This)
     ret = IAudioClient_Start(real);
 
     /*
+       set the flag of:
+
        setting re-adjust size for GetBuffer and ReleaseBuffer
+
        enable buffer size re-adjust for GetBuffer and ReleaseBuffer
+
        modify the sound file read buffer size (not 100% works depends on how the
        game codes)
     */
@@ -315,9 +321,10 @@ static HRESULT WINAPI my_SetEventHandle(IAudioClient *This, HANDLE eventHandle)
     ret = IAudioClient_SetEventHandle(real, eventHandle);
 
     /*
-        in exclusive mode of GITADORA, the game will get the sound buffer size
-        by calling GetBufferSize right after SetEventHandle
-        so set the flag for it here to grab the pointer for the size of sound
+       in exclusive mode of GITADORA, the game will get the sound buffer size
+       by calling GetBufferSize right after SetEventHandle
+
+       so set the flag for it here to grab the pointer for the size of sound
        buffer
     */
     sound_readjust_flag |= GDHOOK_WASAPI_READJUST_ACQUIREREADBUFFER_PTR;

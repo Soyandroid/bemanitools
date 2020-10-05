@@ -1,4 +1,4 @@
-#define LOG_MODULE "d3d9ex-hook"
+#define LOG_MODULE "d3d9-hook"
 
 #include <d3d9.h>
 #include <d3dx9core.h>

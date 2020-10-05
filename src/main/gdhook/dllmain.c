@@ -23,11 +23,13 @@
 #include "gdhook/config-emu.h"
 #include "gdhook/config-game.h"
 #include "gdhook/config-gfx.h"
+#include "gdhook/config-sound.h"
 #include "gdhook/d3d9.h"
 #include "gdhook/drumunit.h"
 #include "gdhook/guitarunit.h"
 #include "gdhook/ledunit.h"
 #include "gdhook/p4io.h"
+#include "gdhook/wasapi.h"
 
 #include "p4ioemu/device.h"
 #include "p4ioemu/setupapi.h"
@@ -48,6 +50,7 @@ static uint8_t game_type;
 static struct gdhook_config_emu gdhook_cfg_emu;
 static struct gdhook_config_game gdhook_cfg_game;
 static struct gdhook_config_gfx gdhook_cfg_gfx;
+static struct gdhook_config_sound gdhook_cfg_sound;
 
 static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 {
@@ -288,6 +291,7 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
     gdhook_config_emu_init(config);
     gdhook_config_game_init(config);
     gdhook_config_gfx_init(config);
+    gdhook_config_sound_init(config);
 
     if (!cconfig_hook_config_init(
             config,
@@ -300,6 +304,7 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
     gdhook_config_emu_get(&gdhook_cfg_emu, config);
     gdhook_config_game_get(&gdhook_cfg_game, config);
     gdhook_config_gfx_get(&gdhook_cfg_gfx, config);
+    gdhook_config_sound_get(&gdhook_cfg_sound, config);
 
     cconfig_finit(config);
 
@@ -335,6 +340,9 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     d3d9_configure(&gdhook_cfg_gfx);
     d3d9_hook_init();
+
+	wasapi_configure(&gdhook_cfg_sound);
+    wasapi_hook_init();
 
     hook_setupapi_init(&p4ioemu_setupapi_data);
 

@@ -1,5 +1,5 @@
-#ifndef D3D9EXHOOK_D3D9EX_H
-#define D3D9EXHOOK_D3D9EX_H
+#ifndef GDHOOK_D3D9_H
+#define GDHOOK_D3D9_H
 
 #include <stdint.h>
 

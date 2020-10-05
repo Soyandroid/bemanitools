@@ -1,5 +1,5 @@
-#ifndef GDHOOK_AC_IO_EMU_LEDNODE_H
-#define GDHOOK_AC_IO_EMU_LEDNODE_H
+#ifndef GDHOOK_LEDNODE_H
+#define GDHOOK_LEDNODE_H
 
 #include <stdbool.h>
 #include <stdint.h>

@@ -26,6 +26,8 @@ src_gdhook        := \
     guitarunit.c \
     drumunit.c \
     d3d9.c \
+    wasapi.c \
     config-gfx.c \
     config-emu.c \
-    config-game.c
+    config-game.c \
+    config-sound.c

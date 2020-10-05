@@ -84,7 +84,7 @@ static HRESULT(WINAPI *real_CoCreateInstance)(
 /* ------------------------------------------------------------------------- */
 
 /*
-    for some reason, IID_IAudioClient and IID_IAudioRenderClient are not defined
+   for some reason, IID_IAudioClient and IID_IAudioRenderClient are undefined
    for me, so defines it here
  */
 DEFINE_GUID(
@@ -241,8 +241,9 @@ my_GetBufferSize(IAudioClient *This, UINT32 *pNumBufferFrames)
         /*
            get the pointer of sound buffer size (per frame?)
 
-           in exclusive mode the game will get this value right after SetEventHandle
-           as fixed buffer size for feeding audio source data into render client
+           in exclusive mode the game will get this value right after
+           SetEventHandle as fixed buffer size for feeding audio source data
+           into render client
 
            notice that if the game parse the value from this pointer to another
            variable it just won't work since we can't adjust the audio source
@@ -345,7 +346,7 @@ static HRESULT WINAPI my_GetService(IAudioClient *This, REFIID riid, void **ppv)
 
     ret = IAudioClient_GetService(real, riid, ppv);
 
-    if (*ppv && IsEqualIID(riid, &__IID_IAudioRenderClient)) {
+    if (ppv && *ppv && IsEqualIID(riid, &__IID_IAudioRenderClient)) {
 
         api_ = *ppv;
 
@@ -362,6 +363,16 @@ static HRESULT WINAPI my_GetService(IAudioClient *This, REFIID riid, void **ppv)
         api_vtbl->ReleaseBuffer = my_ReleaseBuffer;
 
         *ppv = (void *) api_proxy;
+
+        /*
+           we should let something bind the IAudioRenderClient to it's own
+           IAudioClient to prevent there're multiple IAudioRenderClient hit the
+           hook and it will mess up
+
+           this is unsafe here, but since all the game should only have 1 output
+           client it should be fine i guess?
+        */
+        pAudioClient = This;
     }
 
     return ret;
@@ -386,7 +397,7 @@ static HRESULT WINAPI my_Activate(
     ret =
         IMMDevice_Activate(real, iid, dwClsCtx, pActivationParams, ppInterface);
 
-    if (*ppInterface && IsEqualIID(iid, &__IID_IAudioClient)) {
+    if (ppInterface && *ppInterface && IsEqualIID(iid, &__IID_IAudioClient)) {
 
         api_ = *ppInterface;
 
@@ -410,8 +421,6 @@ static HRESULT WINAPI my_Activate(
         api_vtbl->GetService = my_GetService;
 
         *ppInterface = (void *) api_proxy;
-
-        pAudioClient = *ppInterface;
     }
 
     return ret;
@@ -419,9 +428,9 @@ static HRESULT WINAPI my_Activate(
 
 static HRESULT WINAPI my_GetDefaultAudioEndpoint(
     IMMDeviceEnumerator *This,
-    _In_ EDataFlow dataFlow,
-    _In_ ERole role,
-    _Out_ IMMDevice **ppEndpoint)
+    EDataFlow dataFlow,
+    ERole role,
+    IMMDevice **ppEndpoint)
 {
     IMMDeviceEnumerator *real = com_proxy_downcast(This)->real;
     HRESULT ret;
@@ -435,7 +444,7 @@ static HRESULT WINAPI my_GetDefaultAudioEndpoint(
     ret = IMMDeviceEnumerator_GetDefaultAudioEndpoint(
         real, dataFlow, role, ppEndpoint);
 
-    if (*ppEndpoint) {
+    if (ppEndpoint && *ppEndpoint) {
 
         api_ = *ppEndpoint;
 
@@ -463,7 +472,6 @@ static HRESULT WINAPI my_CoCreateInstance(
     REFIID riid,
     LPVOID *ppv)
 {
-
     HRESULT ret;
     HRESULT hr;
     IMMDeviceEnumeratorVtbl *api_vtbl;
@@ -474,7 +482,7 @@ static HRESULT WINAPI my_CoCreateInstance(
 
     ret = real_CoCreateInstance(rclsid, pUnkOuter, dwClsContext, riid, ppv);
 
-    if (*ppv && IsEqualCLSID(rclsid, &CLSID_MMDeviceEnumerator) &&
+    if (ppv && *ppv && IsEqualCLSID(rclsid, &CLSID_MMDeviceEnumerator) &&
         IsEqualIID(riid, &IID_IMMDeviceEnumerator)) {
 
         api_ = *ppv;

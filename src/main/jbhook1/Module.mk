@@ -2,7 +2,6 @@ avsdlls += jbhook1
 
 deplibs_jbhook1	:= \
 	avs \
-	jbhook-util \
 
 ldflags_jbhook1   := \
     -lws2_32 \
@@ -13,6 +12,7 @@ libs_jbhook1       := \
     cconfig \
     eamio \
     jbio \
+	jbhook-util \
     p3ioemu \
     p3io \
     hook \

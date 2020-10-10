@@ -1,4 +1,4 @@
-avslibs += jbhook-util
+libs += jbhook-util
 
 libs_jbhook-util := \
 	acioemu \

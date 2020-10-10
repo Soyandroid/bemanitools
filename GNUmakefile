@@ -102,14 +102,13 @@ libs		:=
 
 avsdlls		:=
 avsexes		:=
-avslibs     :=
 
 testdlls    :=
 testexes    :=
 
 include Module.mk
 
-modules		:= $(dlls) $(exes) $(libs) $(avsdlls) $(avsexes) $(avslibs) $(testdlls) $(testexes)
+modules		:= $(dlls) $(exes) $(libs) $(avsdlls) $(avsexes) $(testdlls) $(testexes)
 
 #
 # $1: Bitness
@@ -164,7 +163,6 @@ $$(bindir_$1_$2):
 $$(eval $$(foreach imp,$(imps),$$(call t_import,$1,$2,$$(imp))))
 $$(eval $$(foreach dll,$(avsdlls),$$(call t_linkdll,$1,$2,$$(dll))))
 $$(eval $$(foreach exe,$(avsexes),$$(call t_linkexe,$1,$2,$$(exe))))
-$$(eval $$(foreach lib,$(avslibs),$$(call t_archive,$1,$2,$$(lib))))
 
 endef
 

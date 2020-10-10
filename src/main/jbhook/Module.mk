@@ -22,7 +22,6 @@ libs_jbhook       := \
 
 src_jbhook        := \
     dllmain.c \
-    eamuse.c \
     gfx.c \
     options.c \
     p4io.c

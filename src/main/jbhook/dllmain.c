@@ -17,12 +17,12 @@
 
 #include "imports/avs.h"
 
-#include "jbhook/eamuse.h"
 #include "jbhook/gfx.h"
 #include "jbhook/p4io.h"
 #include "jbhook/options.h"
 
 #include "jbhook-util/acio.h"
+#include "jbhook-util/eamuse.h"
 #include "jbhook-util/p3io.h"
 #include "jbhook-util/security.h"
 #include "jbhook-util/jbhook-util.h"
@@ -179,7 +179,7 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
     }
 
     gfx_hook_init();
-    jbhook_eamuse_hook_init();
+    jbhook_util_eamuse_hook_init();
 
     return TRUE;
 }

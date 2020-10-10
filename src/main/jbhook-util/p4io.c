@@ -6,7 +6,7 @@
 
 #include "imports/avs.h"
 
-#include "jbhook/p4io.h"
+#include "jbhook-util/p4io.h"
 
 #include "util/log.h"
 

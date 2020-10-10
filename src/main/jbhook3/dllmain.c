@@ -17,18 +17,13 @@
 
 #include "imports/avs.h"
 
-#include "jbhook/gfx.h"
-#include "jbhook/p4io.h"
-#include "jbhook/options.h"
+#include "jbhook3/options.h"
 
 #include "jbhook-util/acio.h"
 #include "jbhook-util/eamuse.h"
-#include "jbhook-util/p3io.h"
+#include "jbhook-util/gfx.h"
+#include "jbhook-util/p4io.h"
 #include "jbhook-util/security.h"
-#include "jbhook-util/jbhook-util.h"
-
-#include "p3ioemu/devmgr.h"
-#include "p3ioemu/emu.h"
 
 #include "p4ioemu/device.h"
 #include "p4ioemu/setupapi.h"
@@ -52,16 +47,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     log_info("--- Begin jbhook dll_entry_init ---");
 
     if (!options.disable_p4ioemu) {
-#if JB_IS_P4IO
         p4ioemu_init(jbhook_p4io_init());
-#else
-        log_assert(sidcode != NULL);
-        // pcbid and eamid are only used here for sec check, the ones used for
-        // network access are taken from ea3-config.xml
-        jbhook_util_p3io_init(
-            &jbhook_util_security_default_mcode,
-            &security_id_default, &security_id_default);
-#endif
 
         log_info("Starting up jubeat IO backend");
 
@@ -77,7 +63,8 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
     }
 
     if (!options.disable_cardemu) {
-        jbhook_util_ac_io_port_init(JB_IS_P4IO ? L"COM2" : L"COM1");
+        jbhook_util_ac_io_port_init(L"COM2");
+        jbhook_util_ac_io_set_iccb();
 
         log_info("Starting up card reader backend");
 
@@ -94,9 +81,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 
     log_info("---  End  jbhook dll_entry_init ---");
 
-    jbhook_util_p3io_set_sidcode(sidcode);
     bool ret = app_hook_invoke_init(sidcode, param);
-    jbhook_util_p3io_set_sidcode(NULL);
 
     return ret;
 
@@ -129,11 +114,7 @@ static bool my_dll_entry_main(void)
     }
 
     if (!options.disable_p4ioemu) {
-#if JB_IS_P4IO
         p4ioemu_fini();
-#else
-        jbhook_util_p3io_fini();
-#endif
     }
 
     options_fini(&options);
@@ -154,11 +135,7 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
     app_hook_init(my_dll_entry_init, my_dll_entry_main);
 
-#if JB_IS_P4IO
     iohook_push_handler(p4ioemu_dispatch_irp);
-#else
-    iohook_push_handler(p3io_emu_dispatch_irp);
-#endif
 
     iohook_push_handler(jbhook_util_ac_io_port_dispatch_irp);
 
@@ -171,14 +148,10 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
     }
 
     if (!options.disable_p4ioemu) {
-#if JB_IS_P4IO
         hook_setupapi_init(&p4ioemu_setupapi_data);
-#else
-        p3io_setupapi_insert_hooks(NULL);
-#endif
     }
 
-    gfx_hook_init();
+    jbhook_util_gfx_hook_init();
     jbhook_util_eamuse_hook_init();
 
     return TRUE;

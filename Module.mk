@@ -69,7 +69,7 @@ cflags          += \
 # Each AVS-dependent project should consume the earliest AVS import definition
 # that is still ABI-compatible with the real build its target links against.
 
-avsvers_32      := 1700 1603 1601 1508 1403 1304 1101 803 0
+avsvers_32      := 1700 1603 1601 1508 1403 1304 1101 1002 803 0
 avsvers_64      := 1700 1603 1601 1508
 
 imps            += avs avs-ea3
@@ -131,8 +131,9 @@ include src/main/inject/Module.mk
 include src/main/jbio/Module.mk
 include src/main/jbiotest/Module.mk
 include src/main/jbhook-util/Module.mk
-include src/main/jbhook/Module.mk
 include src/main/jbhook1/Module.mk
+include src/main/jbhook2/Module.mk
+include src/main/jbhook3/Module.mk
 include src/main/launcher/Module.mk
 include src/main/mempatch-hook/Module.mk
 include src/main/mm/Module.mk
@@ -382,8 +383,22 @@ $(zipdir)/jb-01.zip: \
 	$(V)echo ... $@
 	$(V)zip -j $@ $^
 
+$(zipdir)/jb-02.zip: \
+		build/bin/avs2_1002-32/jbhook1.dll \
+		build/bin/indep-32/inject.exe \
+		build/bin/indep-32/config.exe \
+		build/bin/indep-32/eamio.dll \
+		build/bin/indep-32/geninput.dll \
+		build/bin/indep-32/jbio.dll \
+		dist/jb/config.bat \
+		dist/jb/gamestart-02.bat \
+		dist/jb/jbhook-02.conf \
+		| $(zipdir)/
+	$(V)echo ... $@
+	$(V)zip -j $@ $^
+
 $(zipdir)/jb-03.zip: \
-		build/bin/avs2_1101-32/jbhook.dll \
+		build/bin/avs2_1101-32/jbhook2.dll \
 		build/bin/avs2_1101-32/launcher.exe \
 		build/bin/indep-32/config.exe \
 		build/bin/indep-32/eamio.dll \
@@ -396,7 +411,7 @@ $(zipdir)/jb-03.zip: \
 	$(V)zip -j $@ $^
 
 $(zipdir)/jb-04.zip: \
-		build/bin/avs2_1304-32/jbhook.dll \
+		build/bin/avs2_1304-32/jbhook2.dll \
 		build/bin/avs2_1304-32/launcher.exe \
 		build/bin/indep-32/config.exe \
 		build/bin/indep-32/eamio.dll \
@@ -409,7 +424,7 @@ $(zipdir)/jb-04.zip: \
 	$(V)zip -j $@ $^
 
 $(zipdir)/jb-05-to-07.zip: \
-		build/bin/avs2_1508-32/jbhook.dll \
+		build/bin/avs2_1508-32/jbhook3.dll \
 		build/bin/avs2_1508-32/launcher.exe \
 		build/bin/indep-32/config.exe \
 		build/bin/indep-32/eamio.dll \
@@ -422,7 +437,7 @@ $(zipdir)/jb-05-to-07.zip: \
 	$(V)zip -j $@ $^
 
 $(zipdir)/jb-08.zip: \
-		build/bin/avs2_1700-32/jbhook.dll \
+		build/bin/avs2_1700-32/jbhook3.dll \
 		build/bin/avs2_1700-32/launcher.exe \
 		build/bin/indep-32/config.exe \
 		build/bin/indep-32/eamio.dll \
@@ -592,6 +607,9 @@ $(BUILDDIR)/bemanitools.zip: \
 		$(zipdir)/iidx-hwio-x86.zip \
 		$(zipdir)/iidx-hwio-x64.zip \
 		$(zipdir)/jb-01.zip \
+		$(zipdir)/jb-02.zip \
+		$(zipdir)/jb-03.zip \
+		$(zipdir)/jb-04.zip \
 		$(zipdir)/jb-05-to-07.zip \
 		$(zipdir)/jb-08.zip \
 		$(zipdir)/sdvx-01-to-04.zip \

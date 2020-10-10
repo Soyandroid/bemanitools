@@ -19,4 +19,9 @@ void jbhook_util_ac_io_port_fini(void);
  */
 HRESULT jbhook_util_ac_io_port_dispatch_irp(struct irp *irp);
 
+/**
+ * Enable ICCB emulation instead of the default ICCA emulation
+ */
+void jbhook_util_ac_io_set_iccb(void);
+
 #endif

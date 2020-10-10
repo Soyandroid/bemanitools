@@ -10,7 +10,7 @@
 #include "hook/com-proxy.h"
 #include "hook/table.h"
 
-#include "jbhook/gfx.h"
+#include "jbhook-util/gfx.h"
 
 #include "util/defs.h"
 #include "util/log.h"
@@ -71,13 +71,13 @@ static DWORD STDCALL my_GetGlyphOutline(
         hdc, uChar, uFormat, lpgm, cbBuffer, lpvBuffer, lpmat2);
 }
 
-void gfx_hook_init(void)
+void jbhook_util_gfx_hook_init(void)
 {
     hook_table_apply(NULL, "gdi32.dll", gfx_hook_syms, lengthof(gfx_hook_syms));
 
     log_info("Inserted gfx hooks");
 }
 
-void gfx_set_windowed(bool framed)
+void jbhook_util_gfx_set_windowed(bool framed)
 {
 }

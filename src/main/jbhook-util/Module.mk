@@ -6,4 +6,6 @@ libs_jbhook-util := \
 src_jbhook-util	:= \
 	acio.c \
 	eamuse.c \
+	gfx.c \
 	p3io.c \
+	p4io.c \

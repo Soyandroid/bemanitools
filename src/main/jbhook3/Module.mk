@@ -1,13 +1,13 @@
-avsdlls += jbhook
+avsdlls += jbhook3
 
-deplibs_jbhook    := \
+deplibs_jbhook3    := \
     avs \
 
-ldflags_jbhook   := \
+ldflags_jbhook3   := \
     -lws2_32 \
     -liphlpapi \
 
-libs_jbhook       := \
+libs_jbhook3       := \
     acioemu \
     eamio \
     jbio \
@@ -20,8 +20,6 @@ libs_jbhook       := \
     security \
     util \
 
-src_jbhook        := \
+src_jbhook3        := \
     dllmain.c \
-    gfx.c \
-    options.c \
-    p4io.c
+    options.c

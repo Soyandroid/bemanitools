@@ -26,7 +26,7 @@ games:
 
 When building kactools, independent packages are created for each set of games
 which are ready to be dropped on top of vanilla AC data dumps. We recommend
-using prestine dumps to avoid any conflicts with other hardcoded hacks or
+using pristine dumps to avoid any conflicts with other hardcoded hacks or
 binary patches.
 
 # How to run

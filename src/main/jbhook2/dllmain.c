@@ -90,7 +90,7 @@ static bool my_dll_entry_init(char *sidcode, struct property_node *param)
 
     jbhook_util_p3io_set_sidcode(sidcode);
     bool ret = app_hook_invoke_init(sidcode, param);
-    jbhook_util_p3io_set_sidcode(NULL);
+    jbhook_util_p3io_set_sidcode(strdup(sidcode));
 
     return ret;
 

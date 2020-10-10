@@ -148,50 +148,50 @@ void ac_io_emu_icca_dispatch_request(
         case AC_IO_ICCA_CMD_SET_SLOT_STATE: {
             if(icca->version == v150) {
                 ac_io_emu_icca_send_state(icca, req, 0, false);
-                break;
-            }
-            struct ac_io_icca_misc *misc =
-                (struct ac_io_icca_misc *) &req->cmd.raw;
-            uint8_t cmd;
+            } else {
+                struct ac_io_icca_misc *misc =
+                    (struct ac_io_icca_misc *) &req->cmd.raw;
+                uint8_t cmd;
 
-            switch (misc->subcmd) {
-                case AC_IO_ICCA_SUBCMD_CARD_SLOT_CLOSE:
-                    cmd = EAM_IO_CARD_SLOT_CMD_CLOSE;
-                    break;
+                switch (misc->subcmd) {
+                    case AC_IO_ICCA_SUBCMD_CARD_SLOT_CLOSE:
+                        cmd = EAM_IO_CARD_SLOT_CMD_CLOSE;
+                        break;
 
-                case AC_IO_ICCA_SUBCMD_CARD_SLOT_OPEN:
-                    cmd = EAM_IO_CARD_SLOT_CMD_OPEN;
-                    break;
+                    case AC_IO_ICCA_SUBCMD_CARD_SLOT_OPEN:
+                        cmd = EAM_IO_CARD_SLOT_CMD_OPEN;
+                        break;
 
-                case AC_IO_ICCA_SUBCMD_CARD_SLOT_EJECT:
-                    cmd = EAM_IO_CARD_SLOT_CMD_EJECT;
-                    icca->engaged = false;
-                    break;
+                    case AC_IO_ICCA_SUBCMD_CARD_SLOT_EJECT:
+                        cmd = EAM_IO_CARD_SLOT_CMD_EJECT;
+                        icca->engaged = false;
+                        break;
 
-                case 3:
-                    cmd = EAM_IO_CARD_SLOT_CMD_READ;
-                    break;
+                    case 3:
+                        cmd = EAM_IO_CARD_SLOT_CMD_READ;
+                        break;
 
-                default:
-                    cmd = 0xFF;
-                    log_warning(
-                        "Unhandled slot command %X, node %d",
-                        misc->subcmd,
-                        icca->unit_no);
-                    break;
-            }
-
-            if (cmd != 0xFF) {
-                if (!eam_io_card_slot_cmd(icca->unit_no, cmd)) {
-                    log_warning(
-                        "Eamio failed to handle slot cmd %d for node %d",
-                        cmd,
-                        icca->unit_no);
+                    default:
+                        cmd = 0xFF;
+                        log_warning(
+                            "Unhandled slot command %X, node %d",
+                            misc->subcmd,
+                            icca->unit_no);
+                        break;
                 }
-            }
 
-            /* response with current slot state */
-            ac_io_emu_icca_send_status(icca, req, misc->subcmd);
+                if (cmd != 0xFF) {
+                    if (!eam_io_card_slot_cmd(icca->unit_no, cmd)) {
+                        log_warning(
+                            "Eamio failed to handle slot cmd %d for node %d",
+                            cmd,
+                            icca->unit_no);
+                    }
+                }
+
+                /* response with current slot state */
+                ac_io_emu_icca_send_status(icca, req, misc->subcmd);
+            }
 
             break;
         }
@@ -216,14 +216,13 @@ void ac_io_emu_icca_dispatch_request(
         case AC_IO_ICCA_CMD_POLL_FELICA:
             if (icca->version == v150) {
                 ac_io_emu_icca_send_state(icca, req, 0, false);
-                break;
             } else if (icca->version == v170) {
                 ac_io_emu_icca_send_empty(icca, req);
+                icca->detected_new_reader = true;
             } else {
                 ac_io_emu_icca_send_status(icca, req, 0x01);
+                icca->detected_new_reader = true;
             }
-
-            icca->detected_new_reader = true;
 
             break;
 

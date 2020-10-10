@@ -41,6 +41,7 @@ void jbhook_util_ac_io_port_init(const wchar_t *filename)
 
 #if JB_IS_P4IO
     ac_io_emu_icca_set_version(&ac_io_emu_icca, v150);
+    ac_io_emu_icca_set_product_code(&ac_io_emu_icca, "ICCB");
 #endif
 }
 

@@ -70,12 +70,20 @@ void ac_io_emu_icca_init(
 
     // default to 1.6.0
     icca->version = v160;
+    // default, most common code
+    ac_io_emu_icca_set_product_code(icca, "ICCA");
 }
 
 void ac_io_emu_icca_set_version(
     struct ac_io_emu_icca *icca, enum ac_io_emu_icca_version version)
 {
     icca->version = version;
+}
+
+void ac_io_emu_icca_set_product_code(
+    struct ac_io_emu_icca *icca, const char product_code[4])
+{
+    memcpy(icca->product_code, product_code, sizeof(icca->product_code));
 }
 
 void ac_io_emu_icca_dispatch_request(
@@ -128,7 +136,7 @@ void ac_io_emu_icca_dispatch_request(
 
         case AC_IO_ICCA_CMD_UNKN_0116:
         case AC_IO_ICCA_CMD_UNKN_0120:
-            log_misc("AC_IO_ICCB_CMD_UNK_%04X(%d)", cmd_code, req->addr);
+            log_misc("AC_IO_ICCA_CMD_UNK_%04X(%d)", cmd_code, req->addr);
             ac_io_emu_icca_send_status(icca, req, 0x00);
 
             break;
@@ -274,7 +282,7 @@ static void ac_io_emu_icca_cmd_send_version(
 
     memcpy(
         resp.cmd.version.product_code,
-        icca->version == v150 ? "ICCB" : "ICCA",
+        icca->product_code,
         sizeof(resp.cmd.version.product_code));
     strncpy(resp.cmd.version.date, __DATE__, sizeof(resp.cmd.version.date));
     strncpy(resp.cmd.version.time, __TIME__, sizeof(resp.cmd.version.time));

@@ -28,6 +28,7 @@ struct ac_io_emu_icca {
     uint64_t time_counter_last_poll;
 
     enum ac_io_emu_icca_version version;
+    char product_code[4];
     bool cipher_started;
     uint32_t cipher_keys[4];
 };
@@ -38,6 +39,12 @@ void ac_io_emu_icca_init(
 // optional, call after init to override default version
 void ac_io_emu_icca_set_version(
     struct ac_io_emu_icca *icca, enum ac_io_emu_icca_version version);
+
+// optional, call after init to override default "ICCA" product code.
+// Some games may refuse to boot or expect a different packet format when using
+// one of the alternative codes such as ICCB or ICCC
+void ac_io_emu_icca_set_product_code(
+    struct ac_io_emu_icca *icca, const char product_code[4]);
 
 void ac_io_emu_icca_dispatch_request(
     struct ac_io_emu_icca *icca, const struct ac_io_message *req);

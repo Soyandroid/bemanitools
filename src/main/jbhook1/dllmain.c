@@ -32,7 +32,6 @@
 #include "util/defs.h"
 #include "util/log.h"
 #include "util/thread.h"
-#include "util/str.h"
 
 #define JBHOOK1_INFO_HEADER \
     "jbhook1 for jubeat"    \
@@ -44,27 +43,6 @@ static HWND CDECL
 my_mwindow_create(HINSTANCE, void *, const char *, DWORD, DWORD, BOOL);
 static HWND(CDECL *real_mwindow_create)(
     HINSTANCE, void *, const char *, DWORD, DWORD, BOOL);
-static BOOL my_CreateProcessA(
-  LPCSTR                lpApplicationName,
-  LPSTR                 lpCommandLine,
-  LPSECURITY_ATTRIBUTES lpProcessAttributes,
-  LPSECURITY_ATTRIBUTES lpThreadAttributes,
-  BOOL                  bInheritHandles,
-  DWORD                 dwCreationFlags,
-  LPVOID                lpEnvironment,
-  LPCSTR                lpCurrentDirectory,
-  LPSTARTUPINFOA        lpStartupInfo,
-  LPPROCESS_INFORMATION lpProcessInformation
-);
-static DWORD my_GetGlyphOutlineA(
-  HDC            hdc,
-  UINT           uChar,
-  UINT           fuFormat,
-  LPGLYPHMETRICS lpgm,
-  DWORD          cjBuffer,
-  LPVOID         pvBuffer,
-  const MAT2     *lpmat2
-);
 
 static const struct hook_symbol init_hook_syms[] = {
     {
@@ -73,91 +51,6 @@ static const struct hook_symbol init_hook_syms[] = {
         .link = (void **) &real_mwindow_create,
     },
 };
-
-static const struct hook_symbol kernel32_hooks[] = {
-    {
-        .name = "CreateProcessA",
-        .patch = my_CreateProcessA,
-    },
-};
-
-static const struct hook_symbol gdi32_hooks[] = {
-    {
-        .name = "GetGlyphOutlineA",
-        .patch = my_GetGlyphOutlineA,
-    },
-};
-
-static DWORD my_GetGlyphOutlineA(
-  HDC            hdc,
-  UINT           uChar,
-  UINT           fuFormat,
-  LPGLYPHMETRICS lpgm,
-  DWORD          cjBuffer,
-  LPVOID         pvBuffer,
-  const MAT2     *lpmat2
-) {
-    return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
-}
-
-static BOOL my_CreateProcessA(
-  LPCSTR                lpApplicationName,
-  LPSTR                 lpCommandLine,
-  LPSECURITY_ATTRIBUTES lpProcessAttributes,
-  LPSECURITY_ATTRIBUTES lpThreadAttributes,
-  BOOL                  bInheritHandles,
-  DWORD                 dwCreationFlags,
-  LPVOID                lpEnvironment,
-  LPCSTR                lpCurrentDirectory,
-  LPSTARTUPINFOA        lpStartupInfo,
-  LPPROCESS_INFORMATION lpProcessInformation
-) {
-    LPWSTR bigName = str_widen_from(lpApplicationName, 932);
-    LPWSTR bigLine = str_widen_from(lpCommandLine, 932);
-    LPWSTR bigDir = str_widen_from(lpCurrentDirectory, 932);
-
-    STARTUPINFOEXW ex;
-    ex.StartupInfo.cb = lpStartupInfo->cb;
-    ex.StartupInfo.lpReserved = str_widen_from(lpStartupInfo->lpReserved, 932);
-    ex.StartupInfo.lpDesktop = str_widen_from(lpStartupInfo->lpDesktop, 932);
-    ex.StartupInfo.lpTitle = str_widen_from(lpStartupInfo->lpTitle, 932);
-    ex.StartupInfo.dwX = lpStartupInfo->dwX;
-    ex.StartupInfo.dwY = lpStartupInfo->dwY;
-    ex.StartupInfo.dwXSize = lpStartupInfo->dwXSize;
-    ex.StartupInfo.dwYSize = lpStartupInfo->dwYSize;
-    ex.StartupInfo.dwXCountChars = lpStartupInfo->dwXCountChars;
-    ex.StartupInfo.dwYCountChars = lpStartupInfo->dwYCountChars;
-    ex.StartupInfo.dwFillAttribute = lpStartupInfo->dwFillAttribute;
-    ex.StartupInfo.dwFlags = lpStartupInfo->dwFlags;
-    ex.StartupInfo.wShowWindow = lpStartupInfo->wShowWindow;
-    ex.StartupInfo.cbReserved2 = lpStartupInfo->cbReserved2;
-    ex.StartupInfo.lpReserved2 = lpStartupInfo->lpReserved2;
-    ex.StartupInfo.hStdInput = lpStartupInfo->hStdInput;
-    ex.StartupInfo.hStdOutput = lpStartupInfo->hStdOutput;
-    ex.StartupInfo.hStdError = lpStartupInfo->hStdError;
-
-    if(dwCreationFlags & EXTENDED_STARTUPINFO_PRESENT) {
-        ex.lpAttributeList = ((STARTUPINFOEXA*)lpStartupInfo)->lpAttributeList;
-    }
-
-    BOOL ret = CreateProcessW(
-        bigName,
-        bigLine,
-        lpProcessAttributes,
-        lpThreadAttributes,
-        bInheritHandles,
-        dwCreationFlags,
-        lpEnvironment,
-        bigDir,
-        (STARTUPINFOW*)&ex,
-        lpProcessInformation);
-
-    free(bigName);
-    free(bigLine);
-    free(bigDir);
-
-    return ret;
-}
 
 /**
  * This seems to be a good entry point to intercept before the game calls
@@ -265,11 +158,6 @@ BOOL WINAPI DllMain(HMODULE mod, DWORD reason, void *ctx)
 
         hook_table_apply(
             NULL, "mwindow.dll", init_hook_syms, lengthof(init_hook_syms));
-        hook_table_apply(
-            NULL, "kernel32.dll", kernel32_hooks, lengthof(kernel32_hooks));
-        hook_table_apply(
-            NULL, "gdi32.dll", gdi32_hooks, lengthof(gdi32_hooks));
-
 
         /* Actual hooks for game specific stuff */
 

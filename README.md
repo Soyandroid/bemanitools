@@ -12,6 +12,16 @@ BT5 uses a cleaner approach than BT4 did; specifically, all input and lighting i
 spoken by the real IO PCBs, instead of replacing chunks of game code like BT4. The benefits of this approach are a more
 authentic gameplay experience, and easier support for a broader range of releases from each game series.
 
+## TODO notes current PR
+* add bio2 video drv to supplements
+* iidxiotest: clearing all outputs from the menu doesn't work, lights stay on
+* TODO iidx 25/26/27 lags with bio2 connected, io emulation and poll limiter disabled options
+* add doc for iidx27: in order to make the game detect bio2 boards, you need the original driver ->
+ref to bt supplements (driver also works on win10 x64, tested)
+    * you can also use the stock driver that windows installs automatically. the original driver
+    is only required when running the game without BT5 or with BT5 and IO emulation disabled
+* FAQ: my turntable feels laggy even with bio2 -> turntable bypass hardware cable upgrade
+
 ## Contributions and bug reporting
 [Read the dedicated CONTRIBUTING.md documentation](CONTRIBUTING.md).
 

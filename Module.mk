@@ -154,6 +154,7 @@ include src/main/security/Module.mk
 include src/main/unicorntail/Module.mk
 include src/main/util/Module.mk
 include src/main/vefxio/Module.mk
+include src/main/vigem-iidxio/Module.mk
 include src/main/vigem-sdvxio/Module.mk
 include src/main/vigemstub/Module.mk
 
@@ -378,6 +379,7 @@ $(zipdir)/iidx-hwio-x86.zip: \
 		build/bin/indep-32/iidxio-bio2.dll \
 		build/bin/indep-32/iidxio-ezusb.dll \
 		build/bin/indep-32/iidxio-ezusb2.dll \
+		build/bin/indep-32/vigem-iidxio.exe \
 		| $(zipdir)/
 	$(V)echo ... $@
 	$(V)zip -j $@ $^
@@ -387,6 +389,7 @@ $(zipdir)/iidx-hwio-x64.zip: \
 		build/bin/indep-64/iidxio-bio2.dll \
 		build/bin/indep-64/iidxio-ezusb.dll \
 		build/bin/indep-64/iidxio-ezusb2.dll \
+		build/bin/indep-64/vigem-iidxio.exe \
 		| $(zipdir)/
 	$(V)echo ... $@
 	$(V)zip -j $@ $^

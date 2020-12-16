@@ -9,7 +9,7 @@
 
 #include "util/log.h"
 
-static const uint8_t _BIO2DR_BI2A_IIDX_INIT_DATA = 0x3B;
+static const uint8_t _BIO2DR_BI2A_IIDX_INIT_DATA = 0x2D;
 
 static bool bio2drv_bi2a_iidx_init_io(uint8_t node_id)
 {
